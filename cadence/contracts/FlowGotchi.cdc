@@ -593,15 +593,6 @@ pub contract FlowGotchi: NonFungibleToken {
         self.CollectionPublicPath = /public/flowGotchiCollection
         self.CollectionPrivatePath = /private/flowGotchiCollection
 
-        // Create a Collection resource and save it to storage
-        let collection <- create Collection()
-        self.account.save(<-collection, to: self.CollectionStoragePath)
-
-        // create a public capability for the collection
-        self.account.link<&FlowGotchi.Collection{NonFungibleToken.CollectionPublic, FlowGotchi.FlowGotchiCollectionPublic, MetadataViews.ResolverCollection}>(
-            self.CollectionPublicPath,
-            target: self.CollectionStoragePath
-        )
         emit ContractInitialized()
     }
 }
