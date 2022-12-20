@@ -12,43 +12,6 @@
 import NonFungibleToken from "./shared/NonFungibleToken.cdc"
 import MetadataViews from "./shared/MetadataViews.cdc"
 
-/**
-
-QUESTIONS:
-    - Is there a reason why we're using block height instead of timestamp to define birthdays and cooldowns? Seems like timestamp would be easier client-side
-    - What determines the Gotchi's health? mood? age?
-    - How do we plan on updating the values that change over time on-chain? Things like friendship or mood can't change value without someone submitting a transaction, and it would have
-        to be done by the user since they have the resource with attributes that need to be altered. Will this just be represented off-chain client-side?
-    - What about the custody model? Will a user have to sign every time they interact with their FlowGotchi?
-    - Are we planning on adding names & back stories? We could have ChatGPT do this us pretty quickly
-    - Why do we need to know the FlowGotchi owners?
-    - The variables in the NFT are pub(set), this allows anyone to change the values via Collection.borrowFlowGotchi() - is that desirable?
-    - Is the idea for a FlowGotchi to be 1:1 per Flow account? Judging by mintAndDeposit(), it looks like that's the case, but what if a user just transfers the Collection to another account? 
-        It also looks like a user can withdraw their FlowGotchi. If they withdraw, and lose the resource, they won't be able to mint another one. Is this desired behavior?
-
-RESPONSE
-    - We should just use timestamp I agree
-    - Heath -> TBD, maybe we ditch it to simplify MVP
-    - Mood -> Was thinking of just making this a random think whenever we call a getMood function, like cycles through a few moods a day
-    - Age -> its birthday is consider the bock it was minted on. So we store its birthday block and will determine its age by Current Block - Mint Block
-    - I was thinking about connecting this into the quest interactions. I think we could have a method that updates these values onchain based off of other factors (last time feed, last time pet?). And this function, call it recalcuateStats would get called in the pre/post condition of all the contract/nft functions.
-    - Ya i was thinking a user would just sign every time
-    - I'm super open to ditching the onchain way I did it with something more GPT dynamic
-    - I don't think we do -- that could be cleaned up RE FlwoGotchi owners
-    - yeah not at all,I could use some help fixing that up, was running into issues trying to make that contract only
-    - Yeah a Flow account should only have 1 flow gotchi. Yeah i haven't consider these edge cases... is it possible for us to make these soul bound?
-
-MY RESPONSE
-    Thanks for clarifying, so my takeaways as requirements for the contract are:
-    - Refactor to use timestamps with the exception of birthday (maybe rename "birthblock"), which I'll leave as block height and add a timestamp value for the gotchi's birth as UNIX
-    - Ditch Health to keep things simple
-    - Randomize Mood on `getMood()`
-    - Calculate age on birthblock and/or birthday
-    - Expose a method that we can use in quests to update traits based on when they were last updated (e.g. recalculateStats()) and include a script to demo its use
-    - Remove the contract mapping of owners in Cadence
-    - Make this a Soulbound token. I've had the idea to self-destruct a souldbound resource if it ever detects that it exists in an account is wasn't designed for. E.g. I transfer my Collection to another account and call withdraw() or some other method which would destroy the Gotchi. Not sure if that would be something we'd want to implement here, but we'd also need to get rid of the withdraw method
- */
-
 pub contract FlowGotchi: NonFungibleToken {
     
     /// Contract Variables
@@ -237,7 +200,7 @@ pub contract FlowGotchi: NonFungibleToken {
         /** Interactions */
 
         /// Anyone, any service can Pet your FlowGotchi as long as its within the block limit
-        /// TODO petting should increase the Hunger level (max 100)
+        ///
         pub fun pet(): Bool {
             // Update stats based on time since last actions
             self.updateStats()
@@ -264,7 +227,6 @@ pub contract FlowGotchi: NonFungibleToken {
             return false
         }
 
-        // TODO
         // Add function fed, this will Fed the FlowGotchi (decreasing its hunger level to 0 and increasing its mood by 1)
         // If the user is feeding a FlowGotchi who has let the hunger level of 100, its mood should reduce back to 0 after the feeding
         pub fun feed(): Bool {
@@ -390,10 +352,11 @@ pub contract FlowGotchi: NonFungibleToken {
 
         pub fun deposit(token: @NonFungibleToken.NFT) {
             pre {
+                // Prevent storing more than one FlowGotchi
                 self.ownedNFTs.length == 0:
                     "Collection is already home to a FlowGotchi!"
             }
-            // TODO: Update to prevent including more than 1
+
             let token <- token as! @FlowGotchi.NFT
 
             let id: UInt64 = token.id
