@@ -1,5 +1,29 @@
 {
 	"contracts": {
+		"FungibleToken": {
+			"source": "./cadence/contracts/shared/FungibleToken.cdc",
+			"aliases": {
+				"emulator": "0xee82856bf20e2aa6",
+				"testnet": "0x9a0766d93b6608b7",
+				"mainnet": "0xf233dcee88fe0abe"
+			}
+		},
+		"NonFungibleToken": {
+			"source": "./cadence/contracts/shared/NonFungibleToken.cdc",
+			"aliases": {
+				"emulator": "0xf8d6e0586b0a20c7",
+				"testnet": "0x9a0766d93b6608b7",
+				"mainnet": "0xf233dcee88fe0abe"
+			}
+		},
+		"MetadataViews": {
+			"source": "./cadence/contracts/shared/MetadataViews.cdc",
+			"aliases": {
+				"emulator": "0xf8d6e0586b0a20c7",
+				"testnet": "0x9a0766d93b6608b7",
+				"mainnet": "0xf233dcee88fe0abe"
+			}
+		},
 		"FlowToken": {
 			"source": "./cadence/contracts/shared/FlowToken.cdc",
 			"aliases": {
@@ -7,7 +31,8 @@
 				"testnet": "0x9a0766d93b6608b7",
 				"mainnet": "0xf233dcee88fe0abe"
 			}
-		}
+		},
+		"FlowGotchi": "./cadence/contracts/FlowGotchi.cdc"
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
@@ -16,7 +41,7 @@
 	},
 	"accounts": {
 		"emulator-account": {
-			"address": "34f1777f106b41ad",
+			"address": "f8d6e0586b0a20c7",
 			"key": "725ceef87385fd17423d61d5b2329c6f19843a7ca7a7ab37349e7e391f3b3f9e"
 		},
 		"mainnet-account": {
@@ -33,7 +58,11 @@
 	},
 	"deployments": {
 		"emulator": {
-			"emulator-account": []
+			"emulator-account": [
+				"NonFungibleToken",
+				"MetadataViews",
+				"FlowGotchi" 
+			]
 		}
 	}
 }
