@@ -1,8 +1,12 @@
 {
-	"emulators": {
-		"testnet": {
-			"port": 0,
-			"serviceAccount": "testnet-account"
+	"contracts": {
+		"FlowToken": {
+			"source": "./cadence/contracts/shared/FlowToken.cdc",
+			"aliases": {
+				"emulator": "0xee82856bf20e2aa6",
+				"testnet": "0x9a0766d93b6608b7",
+				"mainnet": "0xf233dcee88fe0abe"
+			}
 		}
 	},
 	"networks": {
@@ -25,6 +29,11 @@
 		"testnet-account": {
 			"address": "513421132e14843b",
 			"key": "b9912a058d78b81fa8eb047d78fbe148d4d6f2d9fc6fcacd2bce40dd8267854a"
+		}
+	},
+	"deployments": {
+		"emulator": {
+			"emulator-account": []
 		}
 	}
 }
