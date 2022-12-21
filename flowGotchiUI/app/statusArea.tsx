@@ -29,7 +29,7 @@ export const StatusArea = ({
           </div>
           <button
             onClick={() => setShowItems(false)}
-            className="absolute top-2 right-2 self-end cursor-pointer rounded-full w-14 h-14 bg-emerald-400"
+            className="absolute top-2 right-2 cursor-pointer rounded-full w-14 h-14 bg-emerald-400"
           >
             Back
           </button>
