@@ -1,8 +1,10 @@
-import FlowGotchi from "../../contracts/shared/FlowGotchi.cdc"
-import NonFungibleToken from "../../contracts/shared/NonFungibleToken.cdc"
+import FlowGotchi from "../contracts/FlowGotchi.cdc"
+import NonFungibleToken from "../contracts/shared/NonFungibleToken.cdc"
 
-// This transaction configures an account to hold FlowGotchi
+/// This transaction configures an account to hold FlowGotchi
+///
 transaction {
+
     prepare(acct: AuthAccount) {
         // create a new empty collection
         let collection <- FlowGotchi.createEmptyCollection()
