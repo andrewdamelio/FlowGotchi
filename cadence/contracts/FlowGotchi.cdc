@@ -131,15 +131,12 @@ pub contract FlowGotchi: NonFungibleToken {
         pub let description: String
         pub let thumbnail: String
 
-<<<<<<< HEAD
         /// Creation block height
         pub let birthblock: UInt64
         /// Creation block timestamp
         pub let birthdate: UFix64
-=======
         // Quest Status (TODO move to another contract)
         access(self) let quests: {UInt64: AnyStruct}
->>>>>>> quests
 
         /* FlowGotchi actions block amount cooldowns */
         /// Amount of seconds before Gotchi can be pet again

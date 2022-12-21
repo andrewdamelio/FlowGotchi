@@ -3,33 +3,33 @@
 		"FungibleToken": {
 			"source": "./cadence/contracts/shared/FungibleToken.cdc",
 			"aliases": {
-				"emulator": "0xee82856bf20e2aa6",
-				"testnet": "0x9a0766d93b6608b7",
-				"mainnet": "0xf233dcee88fe0abe"
+				"emulator": "ee82856bf20e2aa6",
+				"testnet": "9a0766d93b6608b7",
+				"mainnet": "f233dcee88fe0abe"
 			}
 		},
 		"NonFungibleToken": {
 			"source": "./cadence/contracts/shared/NonFungibleToken.cdc",
 			"aliases": {
-				"emulator": "0xf8d6e0586b0a20c7",
-				"testnet": "0x9a0766d93b6608b7",
-				"mainnet": "0xf233dcee88fe0abe"
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "9a0766d93b6608b7",
+				"mainnet": "f233dcee88fe0abe"
 			}
 		},
 		"MetadataViews": {
 			"source": "./cadence/contracts/shared/MetadataViews.cdc",
 			"aliases": {
-				"emulator": "0xf8d6e0586b0a20c7",
-				"testnet": "0x9a0766d93b6608b7",
-				"mainnet": "0xf233dcee88fe0abe"
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "9a0766d93b6608b7",
+				"mainnet": "f233dcee88fe0abe"
 			}
 		},
 		"FlowToken": {
 			"source": "./cadence/contracts/shared/FlowToken.cdc",
 			"aliases": {
-				"emulator": "0xee82856bf20e2aa6",
-				"testnet": "0x9a0766d93b6608b7",
-				"mainnet": "0xf233dcee88fe0abe"
+				"emulator": "0ae53cb6e3f42a79",
+				"testnet": "9a0766d93b6608b7",
+				"mainnet": "f233dcee88fe0abe"
 			}
 		},
 		"FlowGotchi": "./cadence/contracts/FlowGotchi.cdc"
@@ -61,7 +61,7 @@
 			"emulator-account": [
 				"NonFungibleToken",
 				"MetadataViews",
-				"FlowGotchi" 
+				"FlowGotchi"
 			]
 		}
 	}
