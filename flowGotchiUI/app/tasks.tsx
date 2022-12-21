@@ -16,15 +16,7 @@ export const TaskList = ({ tasks = mockTasks }: { tasks?: TTask[] }) => {
 };
 
 const TaskItem = ({ task }: { task: TTask }) => {
-  let CustomButton = (
-    <button
-      className="col-span-4 justify-self-end font-serif cursor-pointer p-2 rounded-md h-10 w-max bg-emerald-400 disabled:bg-amber-300"
-      onClick={() => console.log("No Action")}
-      disabled={true}
-    >
-      Incomplete
-    </button>
-  );
+  let CustomButton = null;
 
   switch (task?.status) {
     case TASK_STATUS.Claimable: {
