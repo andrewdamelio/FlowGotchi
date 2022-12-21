@@ -9,8 +9,10 @@
 *
 */
 
-import NonFungibleToken from "./NonFungibleToken.cdc"
-import MetadataViews from "./MetadataViews.cdc"
+import NonFungibleToken from "./shared/NonFungibleToken.cdc"
+import MetadataViews from "./shared/MetadataViews.cdc"
+import FungibleToken from "./shared/FungibleToken.cdc"
+import FlowToken from "./shared/FlowToken.cdc"
 
 pub contract FlowGotchi: NonFungibleToken {
     pub var nextGotchi: UInt8
@@ -18,6 +20,7 @@ pub contract FlowGotchi: NonFungibleToken {
     pub var gotchiOwners: {Address: Bool}
 
     pub event ContractInitialized()
+    pub event Debug(log: String)
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
 
@@ -52,6 +55,12 @@ pub contract FlowGotchi: NonFungibleToken {
 
     }
 
+    pub enum QuestStatus: UInt8 {
+        pub case Incomplete
+        pub case Completed
+        pub case Claimed
+    }
+
     pub struct Actions {
         pub let canPet: UInt64                // TODO Can only PET every HOUR
         pub let canFeed: UInt64               // TODO Can only FEED every 3 HOUR
@@ -65,12 +74,35 @@ pub contract FlowGotchi: NonFungibleToken {
         }
     }
 
+    pub struct Quests {
+        access(account) var status: QuestStatus
+        pub var name: String
+        pub var description: String
+
+
+        init(
+            status: QuestStatus,
+            name: String,
+            description: String,
+        ) {
+            self.status = status
+            self.name = name
+            self.description = description
+        }
+
+        pub fun updateStatus(status: QuestStatus) {
+            self.status = status
+        }
+    }
+
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
         pub let name: String
         pub let description: String
         pub let thumbnail: String
 
+        // Quest Status (TODO move to another contract)
+        access(self) let quests: {UInt64: AnyStruct}
 
         // FlowGotchi actions block amount cooldowns
         pub let canPetCoolDown: UInt64
@@ -108,6 +140,23 @@ pub contract FlowGotchi: NonFungibleToken {
             self.royalties = royalties
             self.metadata = metadata
             self.items = []
+            self.quests = {
+                0: Quests(
+                    status: FlowGotchi.QuestStatus.Incomplete,
+                    name: "Flow Rookie",
+                    description: "Have at least 10 FLOW tokens in your Dapper Wallet"
+                ),
+                1: Quests(
+                    status: FlowGotchi.QuestStatus.Incomplete,
+                    name: "Flow Veteran",
+                    description: "Have at least 50 FLOW tokens in your Dapper Wallet"
+                ),
+                2: Quests(
+                    status: FlowGotchi.QuestStatus.Incomplete,
+                    name: "Flow All Star",
+                    description: "Have at least 1,000 FLOW tokens in your Dapper Wallet"
+                )
+            }
 
             // Inital Stats
             self.canPetCoolDown = 1                        // TODO update with the amount of blocks required for a COOL down of 1 hour
@@ -119,6 +168,58 @@ pub contract FlowGotchi: NonFungibleToken {
             self.mood = 0
             self.age = getCurrentBlock().height
             self.hunger = 0
+        }
+
+        pub fun completeQuest(questId: UInt64) {
+            let vaultRef = getAccount(self.owner!.address!)
+                .getCapability(/public/flowTokenBalance)
+                .borrow<&FlowToken.Vault{FungibleToken.Balance}>()
+                ?? panic("Could not borrow Balance reference to the Vault")
+
+            if (!self.quests.containsKey(questId)) {
+                panic("Could not find Quest ID")
+            }
+
+            if (questId == 0) { // Flow Balance Quests FLOW > 0.1
+                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
+                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
+                        panic("Quest already completed")
+                    }
+
+                    if (vaultRef.balance > 0.1) {
+                        emit Debug(log: "Quest 1: Completed")
+                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
+                        // quest.status = FlowGotchi.QuestStatus.Completed
+                        self.quests[questId] = quest
+                    }
+                }
+            }
+            else if (questId == 1) { // Flow Balance Quests FLOW > 1
+                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
+                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
+                        panic("Quest already completed")
+                    }
+
+                    if (vaultRef.balance > 1.0) {
+                        emit Debug(log: "Quest 2: Completed")
+                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
+                        self.quests[questId] = quest
+                    }
+                }
+            }
+            else if (questId == 2) { // Flow Balance Quests FLOW > 10
+                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
+                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
+                        panic("Quest already completed")
+                    }
+
+                    if (vaultRef.balance > 10.0) {
+                        emit Debug(log: "Quest 3: Completed")
+                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
+                        self.quests[questId] = quest
+                    }
+                }
+            }
         }
 
         pub fun getCanPet(): Bool {
@@ -133,7 +234,8 @@ pub contract FlowGotchi: NonFungibleToken {
             return [
                 Type<MetadataViews.Display>(),
                 Type<FlowGotchi.Actions>(),
-                Type<FlowGotchi.Traits>()
+                Type<FlowGotchi.Traits>(),
+                Type<FlowGotchi.Quests>()
             ]
         }
 
@@ -160,6 +262,21 @@ pub contract FlowGotchi: NonFungibleToken {
                         canPet: self.canPet,
                         canPetCoolDown: self.canPetCoolDown,
                     )
+                case Type<FlowGotchi.Quests>():
+                    var quests: [FlowGotchi.Quests] = []
+                    let keys = self.quests.keys
+                    for key in keys {
+                        if let quest = self.quests[key] as! FlowGotchi.Quests? {
+                            quests.append(
+                                FlowGotchi.Quests(
+                                    status: quest.status,
+                                    name: quest.name,
+                                    description: quest.description
+                                )
+                            )
+                        }
+                    }
+                    return quests
             }
             return nil
         }
