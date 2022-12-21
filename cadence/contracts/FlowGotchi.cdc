@@ -14,39 +14,37 @@ import MetadataViews from "./shared/MetadataViews.cdc"
 
 pub contract FlowGotchi: NonFungibleToken {
     
-    /// Contract Variables
-    //
+    /// Counter of the next FlowGotchi to be created. Access(contract) to make it more difficult to snoop
     access(contract) var nextGotchi: UInt64
+    /// Total number of FlowGotchis created
     pub var totalSupply: UInt64
+    /// Mapping of names and their origin stories
     pub let gotchisAndOrigins: {String: String}
+    /// URLs of all possible avatars
     pub let avatarURLs: [String]
+    /// All moods of a FlowGotchi in order from saddest to happiest
     pub let moods: [String]
 
-    /// Canonical paths
-    //
+    /* Canonical paths */
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
     pub let CollectionPrivatePath: PrivatePath
     
-    /// Contract Events
-    //
+    /* Contract Events */
     pub event ContractInitialized()
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
 
-    pub enum Actions: UInt8 {
-        pub case pet
-        pub case feed
-    }
-
+    /// Struct representing FlowGotchi traits - used as a MetadataView
+    ///
     pub struct Traits {
-        // Goes up by 1 every time you PET, maybe it goes down every day if you don't PET
+        /// Measure of how close the creature feels to its owner based on interactions
         pub var friendship: UInt64
-        // TODO how does this get set?
+        /// Mood of the FlowGotchi
         pub var mood: UInt64
-        /// Time since birthdate timestampe is the age in seconds (Unix timestampe)
+        /// Time since birthdate timestamp is the age in seconds (Unix timestamp)
         pub var age: UFix64
-        /// Feeding FlowGotchi will reset this to 0, should increaes with every FlowGotchi interaction
+        /// Feeding FlowGotchi will reset this to 0, should increase with every FlowGotchi interaction
         pub var hunger: UInt64
 
         init(
@@ -60,9 +58,10 @@ pub contract FlowGotchi: NonFungibleToken {
             self.age = age
             self.hunger = hunger
         }
-
     }
 
+    /// Struct representing the status of Actions (pet & feed for the moment)
+    ///
     pub struct ActionStatus {
         /// Last time the Gotchi was pet
         pub let lastPet: UFix64
@@ -94,9 +93,13 @@ pub contract FlowGotchi: NonFungibleToken {
         }
     }
 
+    /// This NFT defines a FlowGotchi creature, designed to belong to a Flow Address and accompany them on
+    /// their journey through Flow
+    ///
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
         pub let name: String
+        /// The owner of the FlowGotchi
         pub let homeAddress: Address
         pub let description: String
         pub let thumbnail: String
@@ -122,10 +125,10 @@ pub contract FlowGotchi: NonFungibleToken {
         pub var nextFeedingTime: UFix64
         /// Whether Gotchi can be pet
         pub var canPet: Bool
-        /// Whether Gotchi can be pet
+        /// Whether Gotchi can be fed
         pub var canFeed: Bool
 
-        // Items
+        // Items that belong to the FlowGotchi - not implemented at the moment
         pub let items: [AnyStruct]
 
         // FlowGotchi Stats
@@ -259,10 +262,13 @@ pub contract FlowGotchi: NonFungibleToken {
             return false
         }
 
-        // TODO
-        // pub fun getMood(): String {
-
-        // }
+        /// Returns the mood of the FlowGotchi based on its current mood stat
+        pub fun getMood(): String {
+            self.updateStats()
+            // Since the moods array is initialized in order of increasingly good mood, the
+            // lower the mood value, the lower the mood
+            return FlowGotchi.moods[self.mood % 10]
+        }
 
         /** Attribute Updater */
 
@@ -276,11 +282,36 @@ pub contract FlowGotchi: NonFungibleToken {
             self.canFeed = currentTimestamp >= self.nextFeedingTime
 
             // Calculate Pet cooldowns since last feeding
+            let petPeriodsPassed = (currentTimestamp - self.lastPet) / self.canPetCoolDown
             // Calculate Fed cooldowns since last feeding
-            // Update stats based on cycles
-            // Update friendship
-            // Update mood
-            // Update hunger
+            let fedPeriodsPassed = (currentTimestamp - self.lastFed) / self.canFeedCoolDown
+
+            // Calculate friendship decay
+            let petFriendshipDecay = petPeriodsPassed * 1
+            let fedFriendshipDecay = fedPeriodsPassed * 2
+            if self.friendship - (petFriendshipDecay + fedFriendshipDecay) >= 0 {
+                self.friendship = self.friendship - (petFriendshipDecay + fedFriendshipDecay)
+            } else {
+                self.friendship = 0
+            }
+            
+            // Calculate mood decay
+            let petMoodDecay = petPeriodsPassed * 1
+            let fedMoodDecay = fedPeriodsPassed * 2
+            if self.mood - (petMoodDecay + fedMoodDecay) >= 0 {
+                self.mood = self.mood - (petMoodDecay + fedMoodDecay)
+            } else {
+                self.mood = 0
+            }
+            
+            // Calculate hunger increase
+            let fedHungerIncrease = fedPeriodsPassed * 10
+            // Check 
+            if self.hunger + fedHungerIncrease <= 100 {
+                self.hunger = self.hunger + fedHungerIncrease
+            } else {
+                self.hunger = 100
+            }
         }
 
         /** MetadataViews.Resolver */
@@ -342,12 +373,12 @@ pub contract FlowGotchi: NonFungibleToken {
     }
 
     pub resource Collection: FlowGotchiCollectionPublic, NonFungibleToken.Provider, NonFungibleToken.Receiver, NonFungibleToken.CollectionPublic, MetadataViews.ResolverCollection {
-        pub var flowGotchiMinted: Bool
+        pub var flowGotchiHatched: Bool
         pub var ownedNFTs: @{UInt64: NonFungibleToken.NFT}
 
         init () {
             self.ownedNFTs <- {}
-            self.flowGotchiMinted = false
+            self.flowGotchiHatched = false
         }
 
         pub fun deposit(token: @NonFungibleToken.NFT) {
@@ -402,6 +433,10 @@ pub contract FlowGotchi: NonFungibleToken {
         }
 
         pub fun mintFlowGotchi() {
+            pre {
+                !self.flowGotchiHatched:
+                    "This account's FlowGotchi has already hatched!"
+            }
             let metadata: {String: AnyStruct} = {}
             let currentBlock = getCurrentBlock()
             metadata["mintedBlock"] = currentBlock.height
@@ -413,46 +448,16 @@ pub contract FlowGotchi: NonFungibleToken {
             metadata["hunger"] = 0
             metadata["items"] = []
 
-            // create a FlowGotchi NFT
+            // create a FlowGotchi NFT & grab its id
             let flowGotchi <-FlowGotchi.mintGotchi(metadata: metadata, residence: self.owner!.address)
-            // var flowGotchi <- create NFT(
-            //     id: FlowGotchi.totalSupply,
-            //     name: FlowGotchi.getNames()[FlowGotchi.nextGotchi],
-            //     homeAddress: self.owner!.address,
-            //     description: FlowGotchi.getOrigins()[FlowGotchi.nextGotchi],
-            //     thumbnail: FlowGotchi.getAvatars()[FlowGotchi.nextGotchi],
-            //     royalties: [],
-            //     metadata: metadata,
-            // )
+            let id: UInt64 = flowGotchi.id
 
-            // TODO: Add another check
-            // if (FlowGotchi.hasFlowGotchi(flowAddress: self.owner!.address)) {
-            //     panic("You already have an active Gotchi, please take care of it first")
-            // }
-
-            self.mintAndDeposit(token: <-flowGotchi, blockHeight: currentBlock.height)
-
-            // FlowGotchi.totalSupply = FlowGotchi.totalSupply + UInt64(1)
-
-            // FlowGotchi.nextGotchi = FlowGotchi.totalSupply % FlowGotchi.gotchisAndOrigins.length
-        }
-
-        access(self) fun mintAndDeposit(token: @NonFungibleToken.NFT, blockHeight: UInt64) {
-            let token <- token as! @FlowGotchi.NFT
-
-            let id: UInt64 = token.id
-
-            // add the new token to the dictionary which removes the old one
-            let oldToken <- self.ownedNFTs[id] <- token
-            if (self.flowGotchiMinted) {
-                panic("a FlowGotchi already exists for this account")
-            }
-
-            self.flowGotchiMinted = true;
-
-            emit Deposit(id: id, to: self.owner?.address)
-
-            destroy oldToken
+            // Cast to NonFungibleToken.NFT & deposit to this Colection
+            let nft <-flowGotchi as! @NonFungibleToken.NFT
+            self.deposit(token: <-nft)
+            
+            // Label as hatched
+            self.flowGotchiHatched = true
         }
 
         destroy() {
@@ -539,16 +544,16 @@ pub contract FlowGotchi: NonFungibleToken {
             "https://i.imgur.com/MJEIxIi.png"
         ]
         self.moods = [
-            "Joyful",
-            "Energized",
-            "Playful",
-            "Content",
-            "Apathetic",
-            "Irritable",
-            "Anxious",
-            "Glum",
+            "Disconsolate",
             "Lonely",
-            "Disconsolate"
+            "Glum",
+            "Anxious",
+            "Blah",
+            "Content",
+            "Happy",
+            "Playful",
+            "Energized",
+            "Joyful"
         ]
 
         // Set the named paths

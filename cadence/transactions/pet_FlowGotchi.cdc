@@ -1,15 +1,10 @@
-import FungibleToken from "../../contracts/shared/FungibleToken.cdc"
-import NonFungibleToken from "../../contracts/shared/NonFungibleToken.cdc"
-import FlowGotchi from "../../contracts/shared/FlowGotchi.cdc"
-import MetadataViews from "../../contracts/shared/MetadataViews.cdc"
+import FlowGotchi from "../contracts/FlowGotchi.cdc"
 
 /// Transaction to pet the FlowGotchi NFT in the signer's Collection.
 /// Panics if there is no Collection configured with a FlowGotchiCollectionPublic Capability
 /// configured at the expected path or if there is no FlowGotchi contained in the Collection
 ///
 transaction() {
-    
-    let flowGotchi: &AnyResource{FlowGotchi.FlowGotchiCollectionPublic}
 
     prepare(signer: AuthAccount) {
         // Get a reference to the signer's FlowGotchiCollectionPublic or panic
@@ -20,12 +15,10 @@ transaction() {
         ) ?? panic("Could not borrow a reference to the FlowGotchi.FlowGotchiCollectionPublic resource")
         
         // Get the FlowGotchi in the Collection
-        if let flowGotchiRef = collectionRef.getIDs()[0] {
-            self.flowGotchi = flowGotchiRef
-        } ?? panic("No FlowGotchis found!")
-    }
-
-    execute {
-        self.flowGotchi.pet()
+        if let flowGotchiRef = collectionRef.borrowFlowGotchi(id: 0) {            
+            flowGotchiRef.pet()
+        } else  {
+            panic("No FlowGotchis found!")
+        }
     }
 }
