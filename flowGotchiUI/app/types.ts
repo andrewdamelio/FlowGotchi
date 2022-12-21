@@ -1,3 +1,5 @@
+import { StaticImageData } from "next/image";
+
 export enum TASK_STATUS {
   Claimable,
   Claimed,
@@ -13,10 +15,15 @@ export type TPetInfo = {
     age: number;
     friendshipLevel: number;
     mood: number;
-    health: number;
     hunger: number;
   };
-  items: { itemId: number; description: string; thumbnail: string }[];
+  items: TItem[];
+};
+
+export type TItem = {
+  itemId: string;
+  description: string;
+  thumbnail: string | StaticImageData;
 };
 
 export type TTask = {

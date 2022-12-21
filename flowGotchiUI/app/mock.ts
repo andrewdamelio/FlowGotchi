@@ -1,4 +1,6 @@
 import { TPetInfo, TTask, TUser, TASK_STATUS } from "./types";
+import trophy1 from "../public/trophy_1.png";
+import trophy2 from "../public/trophy_2.png";
 
 export const mockPetInfo: TPetInfo = {
   name: "Tony",
@@ -9,14 +11,18 @@ export const mockPetInfo: TPetInfo = {
     age: 50,
     friendshipLevel: 90,
     mood: 90,
-    health: 100,
     hunger: 10,
   },
   items: [
     {
-      itemId: 1,
-      description: "Number One Foam Finger",
-      thumbnail: "some image of afinger",
+      itemId: '1',
+      description: "50 FLOW tokens",
+      thumbnail: trophy1,
+    },
+    {
+      itemId: '2',
+      description: "10 FLOW tokens",
+      thumbnail: trophy2,
     },
   ],
 };

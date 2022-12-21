@@ -1,7 +1,7 @@
 "use client";
 import { TUser } from "./types";
 
-export const UserInfo = ({ user }: { user: TUser }) => {
+export const UserInfo = ({ user }: { user?: TUser }) => {
   return (
     <section className="flex flex-row mx-auto w-96 items-center my-2">
       <ol className="flex flex-row justify-between w-full px-2">
