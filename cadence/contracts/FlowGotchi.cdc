@@ -282,14 +282,14 @@ pub contract FlowGotchi: NonFungibleToken {
             self.canFeed = currentTimestamp >= self.nextFeedingTime
 
             // Calculate Pet cooldowns since last feeding
-            let petPeriodsPassed = (currentTimestamp - self.lastPet) / self.canPetCoolDown
+            let petPeriodsPassed = UInt64((currentTimestamp - self.lastPet) / self.canPetCoolDown)
             // Calculate Fed cooldowns since last feeding
-            let fedPeriodsPassed = (currentTimestamp - self.lastFed) / self.canFeedCoolDown
+            let fedPeriodsPassed = UInt64((currentTimestamp - self.lastFed) / self.canFeedCoolDown)
 
             // Calculate friendship decay
             let petFriendshipDecay = petPeriodsPassed * 1
             let fedFriendshipDecay = fedPeriodsPassed * 2
-            if self.friendship - (petFriendshipDecay + fedFriendshipDecay) >= 0 {
+            if self.friendship >= (petFriendshipDecay + fedFriendshipDecay) {
                 self.friendship = self.friendship - (petFriendshipDecay + fedFriendshipDecay)
             } else {
                 self.friendship = 0
@@ -298,7 +298,7 @@ pub contract FlowGotchi: NonFungibleToken {
             // Calculate mood decay
             let petMoodDecay = petPeriodsPassed * 1
             let fedMoodDecay = fedPeriodsPassed * 2
-            if self.mood - (petMoodDecay + fedMoodDecay) >= 0 {
+            if self.mood >= (petMoodDecay + fedMoodDecay) {
                 self.mood = self.mood - (petMoodDecay + fedMoodDecay)
             } else {
                 self.mood = 0
@@ -442,10 +442,10 @@ pub contract FlowGotchi: NonFungibleToken {
             metadata["mintedBlock"] = currentBlock.height
             metadata["mintedTime"] = currentBlock.timestamp
             metadata["minter"] = self.owner!.address
-
+            // Initialize traits
             metadata["friendship"] = 0
-            metadata["mood"] = 0
-            metadata["hunger"] = 0
+            metadata["mood"] = 50
+            metadata["hunger"] = 50
             metadata["items"] = []
 
             // create a FlowGotchi NFT & grab its id
