@@ -13,7 +13,7 @@ import NonFungibleToken from "./shared/NonFungibleToken.cdc"
 import MetadataViews from "./shared/MetadataViews.cdc"
 import FungibleToken from "./shared/FungibleToken.cdc"
 import FlowToken from "./shared/FlowToken.cdc"
-import FlowGotchiQuests from "./FlowGotchiQuestCompletion.cdc"
+import FlowGotchiQuests from "./FlowGotchiQuests.cdc"
 
 pub contract FlowGotchi: NonFungibleToken {
 
@@ -38,6 +38,8 @@ pub contract FlowGotchi: NonFungibleToken {
     pub event Debug(log: String)
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
+    pub event NewQuestStarted(flowGotchiID: UInt64, owner: Address, questIdentifer: UInt64)
+    pub event QuestCompleted(flowGotchiID: UInt64, owner: Address, questIdentifier: UInt64, completedQuestID: UInt64)
 
     /// Struct representing FlowGotchi traits - used as a MetadataView
     ///
@@ -124,10 +126,6 @@ pub contract FlowGotchi: NonFungibleToken {
     //     }
     // }
 
-    pub resource interface Quest {
-        pub let 
-    }
-
     /// This NFT defines a FlowGotchi creature, designed to belong to a Flow Address and accompany them on
     /// their journey through Flow
     ///
@@ -168,7 +166,7 @@ pub contract FlowGotchi: NonFungibleToken {
         /// Items that belong to the FlowGotchi - not implemented at the moment
         pub let items: [AnyStruct]
 
-        pub let quests: @{UInt64: FlowGotchiQuests.Quests}
+        pub let quests: @{UInt64: FlowGotchiQuests.Quest}
         // pub let questPaths: [{FlowGotchiQuests.Quest}]
         /// Quests completed by this FlowGotchi
         // pub let completedQuests: @{Type: FlowGotchiQuests.CompletedQuest}
@@ -218,7 +216,7 @@ pub contract FlowGotchi: NonFungibleToken {
             //         description: "Have at least 1,000 FLOW tokens in your Dapper Wallet"
             //     )
             // }
-            self.completedQuests <-{}
+            self.quests <-{}
 
             // Set birth stats
             let currentBlock = getCurrentBlock()
@@ -250,59 +248,8 @@ pub contract FlowGotchi: NonFungibleToken {
             return getCurrentBlock().height - self.birthblock
         }
 
-        pub fun completeQuest(questId: UInt64) {
-            let vaultRef = getAccount(self.owner!.address!)
-                .getCapability(/public/flowTokenBalance)
-                .borrow<&FlowToken.Vault{FungibleToken.Balance}>()
-                ?? panic("Could not borrow Balance reference to the Vault")
-
-            if (!self.quests.containsKey(questId)) {
-                panic("Could not find Quest ID")
-            }
-
-            if (questId == 0) { // Flow Balance Quests FLOW > 0.1
-                // FlowGotchiQuests.validateQuestCompletion(questID: 0, address: self.owner!.address)
-                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
-                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
-                        panic("Quest already completed")
-                    }
-
-                    if (vaultRef.balance > 0.1) {
-                        emit Debug(log: "Quest 1: Completed")
-                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
-                        // quest.status = FlowGotchi.QuestStatus.Completed
-                        self.quests[questId] = quest
-                    }
-                }
-            }
-            else if (questId == 1) { // Flow Balance Quests FLOW > 1
-                // FlowGotchiQuests.validateQuestCompletion(questID: 1, address: self.owner!.address)
-                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
-                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
-                        panic("Quest already completed")
-                    }
-
-                    if (vaultRef.balance > 1.0) {
-                        emit Debug(log: "Quest 2: Completed")
-                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
-                        self.quests[questId] = quest
-                    }
-                }
-            }
-            else if (questId == 2) { // Flow Balance Quests FLOW > 10
-                // FlowGotchiQuests.validateQuestCompletion(questID: 2, address: self.owner!.address)
-                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
-                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
-                        panic("Quest already completed")
-                    }
-
-                    if (vaultRef.balance > 10.0) {
-                        emit Debug(log: "Quest 3: Completed")
-                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
-                        self.quests[questId] = quest
-                    }
-                }
-            }
+        pub fun getQuestRef(questIdentifier: UInt64): &FlowGotchiQuests.Quest? {
+            return &self.quests[questIdentifier] as &FlowGotchiQuests.Quest?
         }
 
         pub fun getCanPet(): Bool {
@@ -313,6 +260,14 @@ pub contract FlowGotchi: NonFungibleToken {
         pub fun getCanFeed(): Bool {
             self.updateStats()
             return self.canFeed
+        }
+
+        /// Returns the mood of the FlowGotchi based on its current mood stat
+        pub fun getMood(): String {
+            self.updateStats()
+            // Since the moods array is initialized in order of increasingly good mood, the
+            // lower the mood value, the lower the mood
+            return FlowGotchi.moods[self.mood % 10]
         }
 
         /** Interactions */
@@ -377,14 +332,6 @@ pub contract FlowGotchi: NonFungibleToken {
             return false
         }
 
-        /// Returns the mood of the FlowGotchi based on its current mood stat
-        pub fun getMood(): String {
-            self.updateStats()
-            // Since the moods array is initialized in order of increasingly good mood, the
-            // lower the mood value, the lower the mood
-            return FlowGotchi.moods[self.mood % 10]
-        }
-
         /** Attribute Updater */
 
         /// Update FlowGotchi's attributes based on current block
@@ -429,14 +376,93 @@ pub contract FlowGotchi: NonFungibleToken {
             }
         }
 
+        /** Quest sign up & completion */
+
+        pub fun embarkOnQuest(questIdentifier: UInt64) {
+            pre {
+                !self.quests.containsKey(questIdentifier):
+                    "You've already embarked on this quest!"
+            }
+            self.quests[questIdentifier] <-! FlowGotchiQuests.startQuest(questIdentifier: questIdentifier)
+            emit NewQuestStarted(flowGotchiID: self.id, owner: self.homeAddress, questIdentifer: questIdentifier)
+        }
+
+        pub fun completeQuest(questIdentifier: UInt64): Bool {
+            pre {
+                self.quests.containsKey(questIdentifier)
+            }
+            let questRef = self.getQuestRef(questIdentifier: questIdentifier)!
+            if questRef.complete() {
+                emit QuestCompleted(flowGotchiID: self.id, owner: self.homeAddress, questIdentifier: questIdentifier, completedQuestID: questRef.id)
+                return true
+            }
+            return false
+            // let vaultRef = getAccount(self.owner!.address!)
+            //     .getCapability(/public/flowTokenBalance)
+            //     .borrow<&FlowToken.Vault{FungibleToken.Balance}>()
+            //     ?? panic("Could not borrow Balance reference to the Vault")
+
+            // if (!self.quests.containsKey(questId)) {
+            //     panic("Could not find Quest ID")
+            // }
+
+            // if (questId == 0) { // Flow Balance Quests FLOW > 0.1
+            //     // FlowGotchiQuests.validateQuestCompletion(questID: 0, address: self.owner!.address)
+            //     if let quest = self.quests[questId] as! FlowGotchi.Quests? {
+            //         if (quest.status == FlowGotchi.QuestStatus.Completed) {
+            //             panic("Quest already completed")
+            //         }
+
+            //         if (vaultRef.balance > 0.1) {
+            //             emit Debug(log: "Quest 1: Completed")
+            //             quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
+            //             // quest.status = FlowGotchi.QuestStatus.Completed
+            //             self.quests[questId] = quest
+            //         }
+            //     }
+            // }
+            // else if (questId == 1) { // Flow Balance Quests FLOW > 1
+            //     // FlowGotchiQuests.validateQuestCompletion(questID: 1, address: self.owner!.address)
+            //     if let quest = self.quests[questId] as! FlowGotchi.Quests? {
+            //         if (quest.status == FlowGotchi.QuestStatus.Completed) {
+            //             panic("Quest already completed")
+            //         }
+
+            //         if (vaultRef.balance > 1.0) {
+            //             emit Debug(log: "Quest 2: Completed")
+            //             quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
+            //             self.quests[questId] = quest
+            //         }
+            //     }
+            // }
+            // else if (questId == 2) { // Flow Balance Quests FLOW > 10
+            //     // FlowGotchiQuests.validateQuestCompletion(questID: 2, address: self.owner!.address)
+            //     if let quest = self.quests[questId] as! FlowGotchi.Quests? {
+            //         if (quest.status == FlowGotchi.QuestStatus.Completed) {
+            //             panic("Quest already completed")
+            //         }
+
+            //         if (vaultRef.balance > 10.0) {
+            //             emit Debug(log: "Quest 3: Completed")
+            //             quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
+            //             self.quests[questId] = quest
+            //         }
+            //     }
+        }
+
+        pub fun removeQuest(questIdentifier: UInt64) {
+            let quest <-self.quests.remove(key: questIdentifier)
+            destroy quest
+        }
+
         /** MetadataViews.Resolver */
 
         pub fun getViews(): [Type] {
             return [
                 Type<MetadataViews.Display>(),
-                Type<FlowGotchi.ActionStatus>(),
-                Type<FlowGotchi.Traits>(),
-                Type<FlowGotchi.Quests>()
+                Type<ActionStatus>(),
+                Type<Traits>(),
+                Type<FlowGotchiQuests.QuestsView>()
             ]
         }
 
@@ -470,13 +496,14 @@ pub contract FlowGotchi: NonFungibleToken {
                         canPet: self.canPet,
                         canFeed: self.canFeed,
                     )
-                // Overall Quest Status
-                // - Quests in progress
-                // - CompletedQuests
-                case Type<FlowGotchi.Quests>():
+                case Type<FlowGotchiQuests.QuestsView>():
+                    let questRefs: [&FlowGotchiQuests.Quest] = []
+                    for questID in self.quests.keys {
+                        questRefs.append(self.getQuestRef(questIdentifier: questID)!)
+                    }
                     return FlowGotchiQuests.QuestsView(
-                        questPaths: self.questPaths,
-                        completedQuestTypes: self.completedQuests.keys
+                        nftID: self.id,
+                        quests: questRefs
                     )
                     // var quests: [FlowGotchi.Quests] = []
                     // let keys = self.completedQuests.keys
@@ -494,6 +521,13 @@ pub contract FlowGotchi: NonFungibleToken {
                     // return quests
             }
             return nil
+        }
+
+        destroy() {
+            pre {
+                self.quests.length == 0: "FlowGotchi still has quests!"
+            }
+            destroy self.quests
         }
     }
 
@@ -702,3 +736,4 @@ pub contract FlowGotchi: NonFungibleToken {
         emit ContractInitialized()
     }
 }
+ 

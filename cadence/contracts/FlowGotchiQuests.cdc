@@ -8,11 +8,6 @@ pub contract FlowGotchiQuests {
     /// A mapping containing all quests that can be completed
     pub let questTypeToIdentifier: {Type: UInt64}
 
-    /// StoragePath for QuestAdmin
-    pub let QuestAdminStoragePath: StoragePath
-    /// PrivatePath for QuestAdmin
-    pub let QuestAdminPrivatePath: PrivatePath
-
     /* Contract Events */
     pub event ContractInitialized()
     pub event NewQuestAdded(questID: UInt64)
@@ -30,15 +25,15 @@ pub contract FlowGotchiQuests {
     /** QuestsView */
 
     pub struct QuestsView {
-        pub let questPaths: [{FlowGotchiQuests.Quest}]
-        pub let completedQuests: [Type]
+        pub let nftID: UInt64
+        pub let quests: [&Quest]
 
         init(
-            questPaths: QuestStatus,
-            completedQuestTypes: String
+            nftID: UInt64,
+            quests: [&Quest]
         ) {
-            self.questPaths = questPaths
-            self.completedQuests = completedQuests
+            self.nftID = nftID
+            self.quests = quests
         }
     }
 
@@ -50,7 +45,7 @@ pub contract FlowGotchiQuests {
         pub let questIdentifier: UInt64
         pub var name: String
         pub var description: String
-        access(contract) fun verify(_ address: Address): Bool
+        access(contract) fun verify(address: Address): Bool
     }
 
     pub struct FlowRookieQuest : QuestVerifier{
@@ -61,8 +56,7 @@ pub contract FlowGotchiQuests {
 
         init() {
             self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
-            self.status = QuestStatus.Incomplete,
-            self.name = "Flow Rookie",
+            self.name = "Flow Rookie"
             self.description = "Have at least 10 FLOW tokens in your Dapper Wallet"
             self.balanceThreshold = 10.0
         }
@@ -77,15 +71,13 @@ pub contract FlowGotchiQuests {
 
     pub struct FlowVeteranQuest : QuestVerifier {
         pub let questIdentifier: UInt64
-        pub var status: QuestStatus
         pub var name: String
         pub var description: String
         pub let balanceThreshold: UFix64
 
         init() {
             self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
-            self.status = QuestStatus.Incomplete,
-            self.name = "Flow Veteran",
+            self.name = "Flow Veteran"
             self.description = "Have at least 1 FLOW tokens in your Dapper Wallet"
             self.balanceThreshold = 50.0
         }
@@ -100,15 +92,13 @@ pub contract FlowGotchiQuests {
 
     pub struct FlowAllStarQuest : QuestVerifier {
         pub let questIdentifier: UInt64
-        pub var status: QuestStatus
         pub var name: String
         pub var description: String
         pub let balanceThreshold: UFix64
 
         init() {
             self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
-            self.status = QuestStatus.Incomplete,
-            self.name = "Flow Veteran",
+            self.name = "Flow Veteran"
             self.description = "Have at least 1 FLOW tokens in your Dapper Wallet"
             self.balanceThreshold = 1000.0
         }
@@ -178,15 +168,17 @@ pub contract FlowGotchiQuests {
 
         init(_ verifier: AnyStruct{QuestVerifier}) {
             self.id = self.uuid
-            self.questIdentifier = verifier.questIdentifer
+            self.questIdentifier = verifier.questIdentifier
             self.status = QuestStatus.Incomplete
             let currentBlock = getCurrentBlock()
             self.startBlockHeight = currentBlock.height
             self.startTimeStamp = currentBlock.timestamp
+            self.completionBlockHeight = nil
+            self.completionTimestamp = nil
             self.verifier = verifier
         }
 
-        pub fun completeQuest(): Bool {
+        pub fun complete(): Bool {
             // Get the owner's address
             let ownerAddress = self.owner!.address
             // Verify completion
@@ -196,12 +188,12 @@ pub contract FlowGotchiQuests {
                 self.completionBlockHeight = currentBlock.height
                 self.completionTimestamp = currentBlock.timestamp
                 // Set as complete
-                self.status =QuestStatus.Completed
+                self.status = QuestStatus.Completed
                 // Increment contract's completed quests
                 FlowGotchiQuests.completedQuestCount = FlowGotchiQuests.completedQuestCount + 1
                 emit QuestCompleted(
                     address: self.owner!.address,
-                    questIdentifer: self.verifier.questIdentifer,
+                    questIdentifier: self.verifier.questIdentifier,
                     completedQuestID: self.id
                 )
                 // Return that quest was verified & completed
@@ -211,7 +203,7 @@ pub contract FlowGotchiQuests {
             return false
         }
 
-        pub fun claim(): Bool {
+        pub fun claim() {
             pre {
                 self.status == QuestStatus.Completed:
                     "Not eligible to be claimed!"
@@ -223,7 +215,8 @@ pub contract FlowGotchiQuests {
 
     pub fun startQuest(questIdentifier: UInt64): @Quest {
         pre {
-            self.questTypeToIdentifier.containsKey(questType): "No quest of given Type!"
+            self.questTypeToIdentifier.values.contains(questIdentifier):
+                "No with given identifier!"
         }
         var verifier: AnyStruct{QuestVerifier}? = nil
         switch(questIdentifier) {
@@ -234,16 +227,20 @@ pub contract FlowGotchiQuests {
                 verifier = FlowVeteranQuest()
             case 2:
                 verifier = FlowVeteranQuest()
+            // case 3:
+            //     verifier = NBATopShotDebut()
+            // case 4:
+            //     verifier = NFLAllDayDebut
         }
         assert(
-            verifier!.questIdentifer == self.questTypeToIdentifier[verifier!.getType()],
+            verifier!.questIdentifier == self.questTypeToIdentifier[verifier!.getType()],
             message: "Verifier improperly constructed!"
         )
-        return <-create Quest(verifier)
+        return <-create Quest(verifier!)
     }
 
-    access(contract) fun balanceMeetsThreshold(balanceThreshold: UFix64, address: Address) {
-        let vaultRef = getAccount(self.owner!.address)
+    access(contract) fun balanceMeetsThreshold(balanceThreshold: UFix64, address: Address): Bool {
+        let vaultRef = getAccount(address)
                 .getCapability<&{FungibleToken.Balance}>(/public/flowTokenBalance)
                 .borrow()
                 ?? panic("Could not borrow Balance reference to the Vault")
@@ -255,9 +252,9 @@ pub contract FlowGotchiQuests {
         self.questTypeToIdentifier = {
                 Type<FlowRookieQuest>(): 0,
                 Type<FlowVeteranQuest>(): 1,
-                Type<FlowAllStarQuest>(): 2,
-                Type<NBATopShotDebut>(): 3,
-                Type<NFLAllDayDebut>(): 4
+                Type<FlowAllStarQuest>(): 2
+                // Type<NBATopShotDebut>(): 3,
+                // Type<NFLAllDayDebut>(): 4
             }
 
         emit ContractInitialized()
