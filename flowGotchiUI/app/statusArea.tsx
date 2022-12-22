@@ -2,7 +2,6 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import flowagotchi from "../public/Avatar of a tamagotchi.png";
 import { mockPetInfo } from "./mock";
 import { TPetInfo, TItem } from "./types";
 
@@ -20,7 +19,7 @@ export const StatusArea = ({
           <div className="absolute top-2 left-2 overflow-clip rounded-lg p-1 bg-gradient-to-tl from-cyan-600 to-rose-400">
             <Image
               alt={`${pet?.name}'s profile image`}
-              src={flowagotchi}
+              src={pet?.thumbnail}
               width={50}
               height={50}
               priority
@@ -46,7 +45,7 @@ export const StatusArea = ({
           <div className="overflow-clip rounded-lg p-1 bg-gradient-to-tl from-cyan-600 to-rose-400">
             <Image
               alt={`${pet?.name}'s profile image`}
-              src={flowagotchi}
+              src={pet?.thumbnail}
               width={200}
               height={200}
               priority

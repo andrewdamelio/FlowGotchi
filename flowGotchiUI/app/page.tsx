@@ -1,29 +1,63 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { StatusArea } from "./statusArea";
 import { UserInfo } from "./userInfo";
 import { mockTasks, mockPetInfo, mockUser } from "./mock";
 import { TaskList } from "./tasks";
 import { TPetInfo, TUser, TTask } from "./types";
+import { getMetaData, hasFlowGotchi, setupFlowGotchi, mintFlowGotchi } from "./fclCalls";
+import * as fcl from "@onflow/fcl"
 
 export default function Home() {
   const [isLogged, setIsLogged] = useState(false);
+  const [account, setAccount] = useState(null);
   const [user, setUser] = useState<null | TUser>(null);
   const [pet, setPet] = useState<null | TPetInfo>(null);
   const [tasks, setTasks] = useState<TTask[]>([]);
   const isLoggedIn = isLogged && pet && user;
-  const logout = () => {
+
+
+  useEffect(() => fcl.currentUser.subscribe(setAccount), [])
+
+
+  const logout = async () => {
+    await fcl.unauthenticate();
     setUser(null);
     setPet(null);
     setTasks([]);
     setIsLogged(false);
   };
 
-  const login = () => {
-    setUser(mockUser);
-    setPet(mockPetInfo);
-    setTasks(mockTasks);
-    setIsLogged(true);
+  const login = async () => {
+    fcl.config({
+      "accessNode.api": "https://rest-testnet.onflow.org",
+      "discovery.wallet": "https://fcl-discovery.onflow.org/testnet/authn",
+    });
+
+    await fcl.logIn()
+
+    console.log('account', account);
+
+    if (account?.addr) {
+      const isFlowGotchiSetup = await hasFlowGotchi(account?.addr);
+
+      console.log('isFlowGotchiSetup', isFlowGotchiSetup)
+
+      if (!isFlowGotchiSetup) {
+        await setupFlowGotchi();
+        await mintFlowGotchi();
+      }
+
+      const metaData = await getMetaData(account?.addr);
+      console.log('metaData', metaData)
+
+
+      // const metaData = await getMetaData(account?.addr);
+      setUser(mockUser);   // TODO
+      setPet(metaData);
+      setTasks(mockTasks); // TODO
+      setIsLogged(true);
+    }
   };
 
   return (
