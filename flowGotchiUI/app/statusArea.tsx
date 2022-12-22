@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { petFlowGotchi } from "./fclCalls";
 import { TPetInfo, TItem, FRIENDSHIP_LEVEL } from "./types";
 
 export const StatusArea = ({ pet }: { pet: TPetInfo }): JSX.Element => {
@@ -68,9 +69,7 @@ export const StatusArea = ({ pet }: { pet: TPetInfo }): JSX.Element => {
               Items
             </button>
             <button
-              onClick={() =>
-                console.log("@TODO: fire off Pet transaction here")
-              }
+              onClick={() => petFlowGotchi()}
               disabled={pet.actions.canPet}
               className="cursor-pointer rounded-full w-14 h-14 bg-emerald-400"
             >

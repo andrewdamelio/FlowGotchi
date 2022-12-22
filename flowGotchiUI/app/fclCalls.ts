@@ -90,6 +90,35 @@ export const hasFlowGotchi = async (user) => {
   });
 }
 
+// TX to pet a FlowGotchi
+export const petFlowGotchi = async () => {
+  const transactionId = await fcl.mutate({
+    cadence: `
+    import FlowGotchi from 0xf3429b0ff26fcb0f
+    transaction() {
+        prepare(signer: AuthAccount) {
+            let collectionRef = signer.borrow<
+                &AnyResource{FlowGotchi.FlowGotchiCollectionPublic}
+            >(
+                from: FlowGotchi.CollectionStoragePath
+            ) ?? panic("Could not borrow a reference to the FlowGotchi.FlowGotchiCollectionPublic resource")
+            if let flowGotchiRef = collectionRef.borrowFlowGotchi(id: collectionRef.getIDs()[0]) {
+                flowGotchiRef.pet()
+            } else  {
+                panic("No FlowGotchis found!")
+            }
+        }
+    }
+    `,
+    payer: fcl.authz,
+    proposer: fcl.authz,
+    authorizations: [fcl.authz],
+    limit: 9999
+  });
+  const transaction = await fcl.tx(transactionId).onceSealed()
+  console.log(transaction)
+}
+
 // TX to setup a FlowGotchi
 export const setupFlowGotchi = async () => {
   const transactionId = await fcl.mutate({
