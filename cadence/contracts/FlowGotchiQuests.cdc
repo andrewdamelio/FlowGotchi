@@ -24,16 +24,28 @@ pub contract FlowGotchiQuests {
 
     /** QuestsView */
 
+    pub struct QuestOverview {
+        pub let status: QuestStatus
+        pub let name: String
+        pub let description: String
+        init(
+            status: QuestStatus,
+            name: String,
+            description: String
+        ) {
+            self.status = status
+            self.name = name
+            self.description = description
+        }
+    }
+
     pub struct QuestsView {
-        pub let nftID: UInt64
-        pub let quests: [&Quest]
+        pub let overviews: [QuestOverview]
 
         init(
-            nftID: UInt64,
-            quests: [&Quest]
+            overviews: [QuestOverview]
         ) {
-            self.nftID = nftID
-            self.quests = quests
+            self.overviews = overviews
         }
     }
 
@@ -260,3 +272,4 @@ pub contract FlowGotchiQuests {
         emit ContractInitialized()
     }
 }
+ 

@@ -485,13 +485,18 @@ pub contract FlowGotchi: NonFungibleToken {
                         canFeed: self.canFeed,
                     )
                 case Type<FlowGotchiQuests.QuestsView>():
-                    let questRefs: [&FlowGotchiQuests.Quest] = []
+                    let quests: [FlowGotchiQuests.QuestOverview] = []
                     for questID in self.quests.keys {
-                        questRefs.append(self.getQuestRef(questIdentifier: questID)!)
+                        let questRef = self.getQuestRef(questIdentifier: questID)!
+                        let overview = FlowGotchiQuests.QuestOverview(
+                            status: questRef.status,
+                            name: questRef.verifier.name,
+                            description: questRef.verifier.description
+                        )
+                        quests.append(overview)
                     }
                     return FlowGotchiQuests.QuestsView(
-                        nftID: self.id,
-                        quests: questRefs
+                        overviews: quests
                     )
                     // var quests: [FlowGotchi.Quests] = []
                     // let keys = self.completedQuests.keys
