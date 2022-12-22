@@ -78,8 +78,8 @@ export default function Home() {
   };
 
   return (
-    <main className="container flex flex-col mx-auto py-12 relative">
-      <h1 className="text-4xl text-lime-500 font-serif text-center my-2">
+    <main className="container flex flex-col mx-auto py-12 relative h-[101vh]">
+      <h1 className="text-4xl dark:text-lime-500 text-lime-600 font-serif text-center my-2">
         FlowGotchi
       </h1>
       {isLoggedIn && (
