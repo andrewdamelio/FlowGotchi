@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
-import { petFlowGotchi } from "./fclCalls";
+import { petFlowGotchi, feedFlowGotchi } from "./fclCalls";
 import { TPetInfo, TItem, FRIENDSHIP_LEVEL } from "./types";
 
 export const StatusArea = ({ pet }: { pet: TPetInfo }): JSX.Element => {
@@ -54,11 +54,11 @@ export const StatusArea = ({ pet }: { pet: TPetInfo }): JSX.Element => {
           }`}</span>
           <div className="w-56 justify-between flex flex-row py-2 h-20 items-start mb-6">
             <button
-              onClick={() =>
-                console.log("@TODO: fire off feed transaction here")
-              }
-              disabled={pet.actions.canFeed}
-              className="cursor-pointer rounded-full w-14 h-14 bg-emerald-400"
+              onClick={() => feedFlowGotchi()}
+              disabled={!pet.actions.canFeed}
+              className={!pet.actions.canFeed ?
+                "opacity-20 cursor-pointer rounded-full w-14 h-14 bg-emerald-400" :
+                "cursor-pointer rounded-full w-14 h-14 bg-emerald-400"}
             >
               Feed
             </button>

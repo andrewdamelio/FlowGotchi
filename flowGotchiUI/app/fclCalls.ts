@@ -1,10 +1,10 @@
 import * as fcl from "@onflow/fcl"
 
-// Script
+// Script to get FlowGotchi MetaData
 export const getMetaData = async (user) => {
   return await fcl.query({
     cadence: `
-    import FlowGotchi from 0xf3429b0ff26fcb0f
+    import FlowGotchi from 0x3a9134be2cb28add
     import MetadataViews from 0x631e88ae7f1d7c20
     pub struct NFT {
         pub let name: String
@@ -73,7 +73,7 @@ export const getMetaData = async (user) => {
 export const hasFlowGotchi = async (user) => {
   return await fcl.query({
     cadence: `
-        import FlowGotchi from 0xf3429b0ff26fcb0f
+        import FlowGotchi from 0x3a9134be2cb28add
         pub fun main(address: Address): Bool {
           if let collectionRef = getAccount(address)
               .getCapability<
@@ -90,11 +90,40 @@ export const hasFlowGotchi = async (user) => {
   });
 }
 
+// TX to feed a FlowGotchi
+export const feedFlowGotchi = async () => {
+  const transactionId = await fcl.mutate({
+    cadence: `
+    import FlowGotchi from 0x3a9134be2cb28add
+    transaction() {
+        prepare(signer: AuthAccount) {
+            let collectionRef = signer.borrow<
+                &AnyResource{FlowGotchi.FlowGotchiCollectionPublic}
+            >(
+                from: FlowGotchi.CollectionStoragePath
+            ) ?? panic("Could not borrow a reference to the FlowGotchi.FlowGotchiCollectionPublic resource")
+            if let flowGotchiRef = collectionRef.borrowFlowGotchi(id: collectionRef.getIDs()[0]) {
+                flowGotchiRef.feed()
+            } else  {
+                panic("No FlowGotchis found!")
+            }
+        }
+    }
+    `,
+    payer: fcl.authz,
+    proposer: fcl.authz,
+    authorizations: [fcl.authz],
+    limit: 9999
+  });
+  const transaction = await fcl.tx(transactionId).onceSealed()
+  console.log(transaction)
+}
+
 // TX to pet a FlowGotchi
 export const petFlowGotchi = async () => {
   const transactionId = await fcl.mutate({
     cadence: `
-    import FlowGotchi from 0xf3429b0ff26fcb0f
+    import FlowGotchi from 0x3a9134be2cb28add
     transaction() {
         prepare(signer: AuthAccount) {
             let collectionRef = signer.borrow<
@@ -123,7 +152,7 @@ export const petFlowGotchi = async () => {
 export const setupFlowGotchi = async () => {
   const transactionId = await fcl.mutate({
     cadence: `
-      import FlowGotchi from 0xf3429b0ff26fcb0f
+      import FlowGotchi from 0x3a9134be2cb28add
       import NonFungibleToken from 0x631e88ae7f1d7c20
       transaction {
         prepare(acct: AuthAccount) {
@@ -148,7 +177,7 @@ export const setupFlowGotchi = async () => {
 export const mintFlowGotchi = async () => {
   const transactionId = await fcl.mutate({
     cadence: `
-      import FlowGotchi from 0xf3429b0ff26fcb0f
+      import FlowGotchi from 0x3a9134be2cb28add
       transaction() {
         let collection: &AnyResource{FlowGotchi.FlowGotchiCollectionPublic}
         prepare(signer: AuthAccount) {

@@ -52,8 +52,8 @@
 			"fromFile": "test.private.json"
 		},
 		"testnet-account": {
-			"address": "0xf3429b0ff26fcb0f",
-			"key": "affb91e2b12e292917b22336538d250fb7a0d40f8a12cf81e9a4fbbd572075dd"
+			"address": "0x3a9134be2cb28add",
+			"key": "d9c32cf7201e0628b3e35c2acb3f484189f5c26d5636956b300639b665c3326a"
 		}
 	},
 	"deployments": {

@@ -557,10 +557,10 @@ pub contract FlowGotchi: NonFungibleToken {
         }
 
         pub fun mintFlowGotchi() {
-            // pre {
-            //     !self.flowGotchiHatched:
-            //         "This account's FlowGotchi has already hatched!"
-            // }
+            pre {
+                !self.flowGotchiHatched:
+                    "This account's FlowGotchi has already hatched!"
+            }
             let metadata: {String: AnyStruct} = {}
             let currentBlock = getCurrentBlock()
             metadata["mintedBlock"] = currentBlock.height
@@ -681,9 +681,9 @@ pub contract FlowGotchi: NonFungibleToken {
         ]
 
         // Set the named paths
-        self.CollectionStoragePath = /storage/flowGotchiCollection
-        self.CollectionPublicPath = /public/flowGotchiCollection
-        self.CollectionPrivatePath = /private/flowGotchiCollection
+        self.CollectionStoragePath = /storage/flowGotchiCollectionV1
+        self.CollectionPublicPath = /public/flowGotchiCollectionV1
+        self.CollectionPrivatePath = /private/flowGotchiCollectionV1
 
         emit ContractInitialized()
     }
