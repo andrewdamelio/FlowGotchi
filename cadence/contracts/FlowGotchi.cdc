@@ -13,6 +13,7 @@ import NonFungibleToken from "./shared/NonFungibleToken.cdc"
 import MetadataViews from "./shared/MetadataViews.cdc"
 import FungibleToken from "./shared/FungibleToken.cdc"
 import FlowToken from "./shared/FlowToken.cdc"
+import FlowGotchiQuests from "./FlowGotchiQuestCompletion.cdc"
 
 pub contract FlowGotchi: NonFungibleToken {
 
@@ -102,27 +103,34 @@ pub contract FlowGotchi: NonFungibleToken {
         }
     }
 
-    pub struct Quests {
-        access(account) var status: QuestStatus
-        pub var name: String
-        pub var description: String
+    // pub struct Quests {
+    //     access(account) var status: QuestStatus
+    //     pub var name: String
+    //     pub var description: String
 
 
-        init(
-            status: QuestStatus,
-            name: String,
-            description: String,
-        ) {
-            self.status = status
-            self.name = name
-            self.description = description
-        }
+    //     init(
+    //         status: QuestStatus,
+    //         name: String,
+    //         description: String,
+    //     ) {
+    //         self.status = status
+    //         self.name = name
+    //         self.description = description
+    //     }
 
-        pub fun updateStatus(status: QuestStatus) {
-            self.status = status
-        }
+    //     pub fun updateStatus(status: QuestStatus) {
+    //         self.status = status
+    //     }
+    // }
+
+    pub resource interface Quest {
+        pub let 
     }
 
+    /// This NFT defines a FlowGotchi creature, designed to belong to a Flow Address and accompany them on
+    /// their journey through Flow
+    ///
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
         pub let name: String
@@ -136,7 +144,7 @@ pub contract FlowGotchi: NonFungibleToken {
         /// Creation block timestamp
         pub let birthdate: UFix64
         // Quest Status (TODO move to another contract)
-        access(self) let quests: {UInt64: AnyStruct}
+        // access(self) let quests: {UInt64: AnyStruct}
 
         /* FlowGotchi actions block amount cooldowns */
         /// Amount of seconds before Gotchi can be pet again
@@ -157,8 +165,13 @@ pub contract FlowGotchi: NonFungibleToken {
         /// Whether Gotchi can be fed
         pub var canFeed: Bool
 
-        // Items that belong to the FlowGotchi - not implemented at the moment
+        /// Items that belong to the FlowGotchi - not implemented at the moment
         pub let items: [AnyStruct]
+
+        pub let quests: @{UInt64: FlowGotchiQuests.Quests}
+        // pub let questPaths: [{FlowGotchiQuests.Quest}]
+        /// Quests completed by this FlowGotchi
+        // pub let completedQuests: @{Type: FlowGotchiQuests.CompletedQuest}
 
         // FlowGotchi Stats
         // 0 - No Limit
@@ -188,33 +201,24 @@ pub contract FlowGotchi: NonFungibleToken {
             self.royalties = royalties
             self.metadata = metadata
             self.items = []
-            self.quests = {
-                0: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "Flow Rookie",
-                    description: "Have at least 10 FLOW tokens in your Dapper Wallet"
-                ),
-                1: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "Flow Veteran",
-                    description: "Have at least 50 FLOW tokens in your Dapper Wallet"
-                ),
-                2: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "Flow All Star",
-                    description: "Have at least 1,000 FLOW tokens in your Dapper Wallet"
-                ),
-                3: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "NBA Top Shot Debut",
-                    description: "Own one NBA Top Shot Moment"
-                ),
-                4: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "NFL All Day Debut",
-                    description: "Own one NFL All Day Moment"
-                )
-            }
+            // self.quests = {
+            //     0: Quests(
+            //         status: FlowGotchi.QuestStatus.Incomplete,
+            //         name: "Flow Rookie",
+            //         description: "Have at least 10 FLOW tokens in your Dapper Wallet"
+            //     ),
+            //     1: Quests(
+            //         status: FlowGotchi.QuestStatus.Incomplete,
+            //         name: "Flow Veteran",
+            //         description: "Have at least 50 FLOW tokens in your Dapper Wallet"
+            //     ),
+            //     2: Quests(
+            //         status: FlowGotchi.QuestStatus.Incomplete,
+            //         name: "Flow All Star",
+            //         description: "Have at least 1,000 FLOW tokens in your Dapper Wallet"
+            //     )
+            // }
+            self.completedQuests <-{}
 
             // Set birth stats
             let currentBlock = getCurrentBlock()
@@ -257,6 +261,7 @@ pub contract FlowGotchi: NonFungibleToken {
             }
 
             if (questId == 0) { // Flow Balance Quests FLOW > 0.1
+                // FlowGotchiQuests.validateQuestCompletion(questID: 0, address: self.owner!.address)
                 if let quest = self.quests[questId] as! FlowGotchi.Quests? {
                     if (quest.status == FlowGotchi.QuestStatus.Completed) {
                         panic("Quest already completed")
@@ -271,6 +276,7 @@ pub contract FlowGotchi: NonFungibleToken {
                 }
             }
             else if (questId == 1) { // Flow Balance Quests FLOW > 1
+                // FlowGotchiQuests.validateQuestCompletion(questID: 1, address: self.owner!.address)
                 if let quest = self.quests[questId] as! FlowGotchi.Quests? {
                     if (quest.status == FlowGotchi.QuestStatus.Completed) {
                         panic("Quest already completed")
@@ -284,6 +290,7 @@ pub contract FlowGotchi: NonFungibleToken {
                 }
             }
             else if (questId == 2) { // Flow Balance Quests FLOW > 10
+                // FlowGotchiQuests.validateQuestCompletion(questID: 2, address: self.owner!.address)
                 if let quest = self.quests[questId] as! FlowGotchi.Quests? {
                     if (quest.status == FlowGotchi.QuestStatus.Completed) {
                         panic("Quest already completed")
@@ -463,21 +470,28 @@ pub contract FlowGotchi: NonFungibleToken {
                         canPet: self.canPet,
                         canFeed: self.canFeed,
                     )
+                // Overall Quest Status
+                // - Quests in progress
+                // - CompletedQuests
                 case Type<FlowGotchi.Quests>():
-                    var quests: [FlowGotchi.Quests] = []
-                    let keys = self.quests.keys
-                    for key in keys {
-                        if let quest = self.quests[key] as! FlowGotchi.Quests? {
-                            quests.append(
-                                FlowGotchi.Quests(
-                                    status: quest.status,
-                                    name: quest.name,
-                                    description: quest.description
-                                )
-                            )
-                        }
-                    }
-                    return quests
+                    return FlowGotchiQuests.QuestsView(
+                        questPaths: self.questPaths,
+                        completedQuestTypes: self.completedQuests.keys
+                    )
+                    // var quests: [FlowGotchi.Quests] = []
+                    // let keys = self.completedQuests.keys
+                    // for key in keys {
+                    //     if let quest = self.completedQuests[key] as! FlowGotchi.Quests? {
+                    //         quests.append(
+                    //             FlowGotchi.Quests(
+                    //                 status: quest.status,
+                    //                 name: quest.name,
+                    //                 description: quest.description
+                    //             )
+                    //         )
+                    //     }
+                    // }
+                    // return quests
             }
             return nil
         }
