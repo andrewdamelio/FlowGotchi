@@ -1,5 +1,20 @@
 import * as fcl from "@onflow/fcl"
 
+// Script to get FlowGotchi Moments count
+export const getMoments = async (user) => {
+  return await fcl.query({
+    cadence: `
+      import TopShot from 0x877931736ee77cff
+      pub fun main(account: Address): [UInt64] {
+        let acct = getAccount(account)
+        let collectionRef = acct.getCapability(/public/MomentCollection).borrow<&{TopShot.MomentCollectionPublic}>()!
+        return collectionRef.getIDs()
+      }
+    `,
+    args: (arg, t) => [arg(user, t.Address)]
+  });
+}
+
 // Script to get FlowGotchi MetaData
 export const getMetaData = async (user) => {
   return await fcl.query({
