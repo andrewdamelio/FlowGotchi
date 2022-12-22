@@ -11,6 +11,7 @@ import * as fcl from "@onflow/fcl"
 export default function Home() {
   const [isLogged, setIsLogged] = useState(false);
   const [user, setUser] = useState<null | TUser>(null);
+  const [loading, setLoading] = useState(false);
   const [pet, setPet] = useState<null | TPetInfo>(null);
   const [tasks, setTasks] = useState<TTask[]>([]);
   const isLoggedIn = isLogged && pet && user;
@@ -36,6 +37,7 @@ export default function Home() {
     });
 
     await fcl.logIn()
+    setLoading(true);
     let flowUser =  await fcl.currentUser.authenticate();
     const address = flowUser?.addr;
 
@@ -75,6 +77,7 @@ export default function Home() {
       setTasks(metaData?.quests || []);
       setIsLogged(true);
     }
+    setLoading(false);
   };
 
   return (
@@ -104,7 +107,7 @@ export default function Home() {
             className="font-serif cursor-pointer h-8 px-4 my-2 rounded-full bg-emerald-500"
             onClick={login}
           >
-            Connect Wallet
+            {loading ? "Connecting..." : "Connect Wallet"}
           </button>
         </section>
       )}
