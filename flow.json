@@ -32,6 +32,30 @@
 				"mainnet": "0x1654653399040a61"
 			}
 		},
+		"TopShotLocking": {
+			"source": "./cadence/contracts/shared/TopShotLocking.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "877931736ee77cff",
+				"mainnet": "0b2a3299cc857e29"
+			}
+		},
+		"TopShot": {
+			"source": "./cadence/contracts/shared/TopShot.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "877931736ee77cff",
+				"mainnet": "0b2a3299cc857e29"
+			}
+		},
+		"AllDay": {
+			"source": "./cadence/contracts/shared/AllDay.cdc",
+			"aliases": {
+				"emulator": "f8d6e0586b0a20c7",
+				"testnet": "4dfd62c88d1b6462",
+				"mainnet": "e4cf4bdc1751c65d"
+			}
+		},
 		"FlowGotchi": "./cadence/contracts/FlowGotchi.cdc",
 		"FlowGotchiQuests": "./cadence/contracts/FlowGotchiQuests.cdc"
 	},
@@ -62,6 +86,9 @@
 			"emulator-account": [
 				"NonFungibleToken",
 				"MetadataViews",
+				"TopShotLocking",
+				"TopShot",
+				"AllDay",
 				"FlowGotchiQuests",
 				"FlowGotchi"
 			]

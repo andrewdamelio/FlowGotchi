@@ -182,7 +182,9 @@ pub contract FlowGotchi: NonFungibleToken {
             self.quests <-{
                 0: <-FlowGotchiQuests.startQuest(questIdentifier: 0),
                 1: <-FlowGotchiQuests.startQuest(questIdentifier: 1),
-                2: <-FlowGotchiQuests.startQuest(questIdentifier: 2)
+                2: <-FlowGotchiQuests.startQuest(questIdentifier: 2),
+                3: <-FlowGotchiQuests.startQuest(questIdentifier: 3),
+                4: <-FlowGotchiQuests.startQuest(questIdentifier: 4)
             }
 
             // Set birth stats

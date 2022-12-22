@@ -1,5 +1,7 @@
 import FungibleToken from "./shared/FungibleToken.cdc"
 import NonFungibleToken from "./shared/NonFungibleToken.cdc"
+import TopShot from "./shared/TopShot.cdc"
+import AllDay from "./shared/AllDay.cdc"
 
 /// A contract defining the sorts of quests that can be completed
 pub contract FlowGotchiQuests {
@@ -55,15 +57,15 @@ pub contract FlowGotchiQuests {
     ///
     pub struct interface QuestVerifier {
         pub let questIdentifier: UInt64
-        pub var name: String
-        pub var description: String
+        pub let name: String
+        pub let description: String
         access(contract) fun verify(address: Address): Bool
     }
 
     pub struct FlowRookieQuest : QuestVerifier{
         pub let questIdentifier: UInt64
-        pub var name: String
-        pub var description: String
+        pub let name: String
+        pub let description: String
         pub let balanceThreshold: UFix64
 
         init() {
@@ -83,14 +85,14 @@ pub contract FlowGotchiQuests {
 
     pub struct FlowVeteranQuest : QuestVerifier {
         pub let questIdentifier: UInt64
-        pub var name: String
-        pub var description: String
+        pub let name: String
+        pub let description: String
         pub let balanceThreshold: UFix64
 
         init() {
             self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
             self.name = "Flow Veteran"
-            self.description = "Have at least 1 FLOW tokens in your Dapper Wallet"
+            self.description = "Have at least 50 FLOW tokens in your Dapper Wallet"
             self.balanceThreshold = 50.0
         }
 
@@ -104,14 +106,14 @@ pub contract FlowGotchiQuests {
 
     pub struct FlowAllStarQuest : QuestVerifier {
         pub let questIdentifier: UInt64
-        pub var name: String
-        pub var description: String
+        pub let name: String
+        pub let description: String
         pub let balanceThreshold: UFix64
 
         init() {
             self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
-            self.name = "Flow Veteran"
-            self.description = "Have at least 1 FLOW tokens in your Dapper Wallet"
+            self.name = "Flow All Star"
+            self.description = "Have at least 1,000 FLOW tokens in your Dapper Wallet"
             self.balanceThreshold = 1000.0
         }
 
@@ -123,47 +125,67 @@ pub contract FlowGotchiQuests {
         }
     }
 
-    // pub struct NBATopShotDebut : QuestVerifier {
-    //     pub let questIdentifier: UInt64
-    //     pub var name: String
-    //     pub var description: String
+    pub struct NBATopShotDebut : QuestVerifier {
+        pub let questIdentifier: UInt64
+        pub let name: String
+        pub let description: String
+        pub let collectionThreshold: Int
 
-    //     init() {
-    //         self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
-    //         self.status = QuestStatus.Incomplete,
-    //         self.name = "Flow Rookie",
-    //         self.description = "Have at least 0.1 FLOW tokens in your Dapper Wallet"
-    //     }
+        init() {
+            self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
+            self.name = "NBA Top Shot Debut"
+            self.description = "Own one NBA Top Shot Moment"
+            self.collectionThreshold = 1
+        }
 
-    //     access(contract) fun verify(vaultRef: &{FungibleToken.Balance}): Bool {
-    //         if (vaultRef.balance > 0.1) {
-    //             self.status = QuestStatus.Completed
-    //             return true
-    //         }
-    //         return false
-    //     }
-    // }
+        access(contract) fun verify(address: Address): Bool {
+            // Get a reference to the account's MomentCollectionPublic
+            let collectionRef = getAccount(address)
+                .getCapability<
+                    &TopShot.Collection{TopShot.MomentCollectionPublic}
+                >(
+                    /public/MomentCollection
+                )
+                .borrow()
+                ?? panic("Could not borrow Reference to MomentCollectionPublic for specified Address ".concat(address.toString()))
+            // Complete the quest if the collection meets the threshold
+            if collectionRef.getIDs().length >= self.collectionThreshold {
+                return true
+            }
+            return false
+        }
+    }
 
-    // pub struct NFLAllDayDebut : QuestVerifier {
-    //     pub let questIdentifier: UInt64
-    //     pub var name: String
-    //     pub var description: String
+    pub struct NFLAllDayDebut : QuestVerifier {
+        pub let questIdentifier: UInt64
+        pub let name: String
+        pub let description: String
+        pub let collectionThreshold: Int
 
-    //     init() {
-    //         self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
-    //         self.status = QuestStatus.Incomplete,
-    //         self.name = "Flow Rookie",
-    //         self.description = "Have at least 0.1 FLOW tokens in your Dapper Wallet"
-    //     }
+        init() {
+            self.questIdentifier = FlowGotchiQuests.questTypeToIdentifier[self.getType()]!
+            self.name = "NFL All Day Debut"
+            self.description = "Own one NFL All Day Moment"
+            self.collectionThreshold = 1
+        }
 
-    //     access(contract) fun verify(vaultRef: &{FungibleToken.Balance}): Bool {
-    //         if (vaultRef.balance > 0.1) {
-    //             self.status = QuestStatus.Completed
-    //             return true
-    //         }
-    //         return false
-    //     }
-    // }
+        access(contract) fun verify(address: Address): Bool {
+            // Get a reference to the account's MomentCollectionPublic
+            let collectionRef = getAccount(address)
+                .getCapability<
+                    &AllDay.Collection{AllDay.MomentNFTCollectionPublic}
+                >(
+                    AllDay.CollectionPublicPath
+                )
+                .borrow()
+                ?? panic("Could not borrow Reference to MomentNFTCollectionPublic for specified Address ".concat(address.toString()))
+            // Complete the quest if the collection meets the threshold
+            if collectionRef.getIDs().length >= self.collectionThreshold {
+                return true
+            }
+            return false
+        }
+    }
 
     /** Quest Resource */
     /// Resource representing proof of a completed quest
@@ -239,10 +261,10 @@ pub contract FlowGotchiQuests {
                 verifier = FlowVeteranQuest()
             case 2:
                 verifier = FlowVeteranQuest()
-            // case 3:
-            //     verifier = NBATopShotDebut()
-            // case 4:
-            //     verifier = NFLAllDayDebut
+            case 3:
+                verifier = NBATopShotDebut()
+            case 4:
+                verifier = NFLAllDayDebut()
         }
         assert(
             verifier!.questIdentifier == self.questTypeToIdentifier[verifier!.getType()],
@@ -264,9 +286,9 @@ pub contract FlowGotchiQuests {
         self.questTypeToIdentifier = {
                 Type<FlowRookieQuest>(): 0,
                 Type<FlowVeteranQuest>(): 1,
-                Type<FlowAllStarQuest>(): 2
-                // Type<NBATopShotDebut>(): 3,
-                // Type<NFLAllDayDebut>(): 4
+                Type<FlowAllStarQuest>(): 2,
+                Type<NBATopShotDebut>(): 3,
+                Type<NFLAllDayDebut>(): 4
             }
 
         emit ContractInitialized()
