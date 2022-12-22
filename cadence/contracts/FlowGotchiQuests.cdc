@@ -255,7 +255,6 @@ pub contract FlowGotchiQuests {
         }
         var verifier: AnyStruct{QuestVerifier}? = nil
         switch(questIdentifier) {
-            // TODO: Add other quest verifiers
             case 0:
                 verifier = FlowRookieQuest()
             case 1:

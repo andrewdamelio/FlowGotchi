@@ -303,7 +303,6 @@ pub contract FlowGotchi: NonFungibleToken {
         /// Update FlowGotchi's attributes based on current block
         ///
         pub fun updateStats() {
-            // TODO: Update hunger, mood, and friendship
             // Update petting & feeding times
             let currentTimestamp = getCurrentBlock().timestamp
             self.canPet = currentTimestamp >= self.nextPettingTime
