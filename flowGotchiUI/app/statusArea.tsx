@@ -70,8 +70,10 @@ export const StatusArea = ({ pet }: { pet: TPetInfo }): JSX.Element => {
             </button>
             <button
               onClick={() => petFlowGotchi()}
-              disabled={pet.actions.canPet}
-              className="cursor-pointer rounded-full w-14 h-14 bg-emerald-400"
+              disabled={!pet.actions.canPet}
+              className={!pet.actions.canPet ?
+                "opacity-20 rounded-full w-14 h-14 bg-emerald-400" :
+                "cursor-pointer rounded-full w-14 h-14 bg-emerald-400"}
             >
               Pet
             </button>

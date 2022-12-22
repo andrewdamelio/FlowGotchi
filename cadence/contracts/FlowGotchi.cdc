@@ -15,7 +15,7 @@ import FungibleToken from "./shared/FungibleToken.cdc"
 import FlowToken from "./shared/FlowToken.cdc"
 
 pub contract FlowGotchi: NonFungibleToken {
-    
+
     /// Counter of the next FlowGotchi to be created. Access(contract) to make it more difficult to snoop
     access(contract) var nextGotchi: UInt64
     /// Total number of FlowGotchis created
@@ -31,7 +31,7 @@ pub contract FlowGotchi: NonFungibleToken {
     pub let CollectionStoragePath: StoragePath
     pub let CollectionPublicPath: PublicPath
     pub let CollectionPrivatePath: PrivatePath
-    
+
     /* Contract Events */
     pub event ContractInitialized()
     pub event Debug(log: String)
@@ -203,11 +203,21 @@ pub contract FlowGotchi: NonFungibleToken {
                     status: FlowGotchi.QuestStatus.Incomplete,
                     name: "Flow All Star",
                     description: "Have at least 1,000 FLOW tokens in your Dapper Wallet"
+                ),
+                3: Quests(
+                    status: FlowGotchi.QuestStatus.Incomplete,
+                    name: "NBA Top Shot Debut",
+                    description: "Own one NBA Top Shot Moment"
+                ),
+                4: Quests(
+                    status: FlowGotchi.QuestStatus.Incomplete,
+                    name: "NFL All Day Debut",
+                    description: "Own one NFL All Day Moment"
                 )
             }
 
             // Set birth stats
-            let currentBlock = getCurrentBlock() 
+            let currentBlock = getCurrentBlock()
             self.birthblock = currentBlock.height
             self.birthdate = currentBlock.timestamp
 
@@ -235,7 +245,7 @@ pub contract FlowGotchi: NonFungibleToken {
         pub fun getAgeInBlocks(): UInt64 {
             return getCurrentBlock().height - self.birthblock
         }
-        
+
         pub fun completeQuest(questId: UInt64) {
             let vaultRef = getAccount(self.owner!.address!)
                 .getCapability(/public/flowTokenBalance)
@@ -308,7 +318,7 @@ pub contract FlowGotchi: NonFungibleToken {
             if self.canPet {
                 // Track when petting happend
                 self.lastPet = getCurrentBlock().timestamp
-                
+
                 // Increment stats if below max values
                 self.friendship = self.friendship + 4
                 if self.mood + 4 <= 100 {
@@ -317,7 +327,7 @@ pub contract FlowGotchi: NonFungibleToken {
                 if self.hunger + 1 <= 100 {
                     self.hunger = self.hunger + 1
                 }
-                
+
                 // Identify the next time Gotchi can be pet
                 self.nextPettingTime = self.lastPet + self.canPetCoolDown
 
@@ -336,7 +346,7 @@ pub contract FlowGotchi: NonFungibleToken {
             if self.canFeed {
                 // Track when petting happend
                 self.lastFed = getCurrentBlock().timestamp
-                
+
                 // Increment stats if below max values
                 self.friendship = self.friendship + 8
                 if self.mood + 8 <= 100 {
@@ -349,7 +359,7 @@ pub contract FlowGotchi: NonFungibleToken {
                 } else {
                     self.hunger = 0
                 }
-                
+
                 // Identify the next time Gotchi can be pet
                 self.nextFeedingTime = self.lastFed + self.canFeedCoolDown
 
@@ -376,7 +386,7 @@ pub contract FlowGotchi: NonFungibleToken {
             // TODO: Update hunger, mood, and friendship
             // Update petting & feeding times
             let currentTimestamp = getCurrentBlock().timestamp
-            self.canPet = currentTimestamp >= self.nextFeedingTime
+            self.canPet = currentTimestamp >= self.nextPettingTime
             self.canFeed = currentTimestamp >= self.nextFeedingTime
 
             // Calculate Pet cooldowns since last feeding
@@ -392,7 +402,7 @@ pub contract FlowGotchi: NonFungibleToken {
             } else {
                 self.friendship = 0
             }
-            
+
             // Calculate mood decay
             let petMoodDecay = petPeriodsPassed * 1
             let fedMoodDecay = fedPeriodsPassed * 2
@@ -401,10 +411,10 @@ pub contract FlowGotchi: NonFungibleToken {
             } else {
                 self.mood = 0
             }
-            
+
             // Calculate hunger increase
             let fedHungerIncrease = fedPeriodsPassed * 10
-            // Check 
+            // Check
             if self.hunger + fedHungerIncrease <= 100 {
                 self.hunger = self.hunger + fedHungerIncrease
             } else {
@@ -547,10 +557,10 @@ pub contract FlowGotchi: NonFungibleToken {
         }
 
         pub fun mintFlowGotchi() {
-            pre {
-                !self.flowGotchiHatched:
-                    "This account's FlowGotchi has already hatched!"
-            }
+            // pre {
+            //     !self.flowGotchiHatched:
+            //         "This account's FlowGotchi has already hatched!"
+            // }
             let metadata: {String: AnyStruct} = {}
             let currentBlock = getCurrentBlock()
             metadata["mintedBlock"] = currentBlock.height
@@ -569,7 +579,7 @@ pub contract FlowGotchi: NonFungibleToken {
             // Cast to NonFungibleToken.NFT & deposit to this Colection
             let nft <-flowGotchi as! @NonFungibleToken.NFT
             self.deposit(token: <-nft)
-            
+
             // Label as hatched
             self.flowGotchiHatched = true
         }
