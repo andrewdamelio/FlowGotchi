@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { petFlowGotchi } from "./fclCalls";
 import { mockPetInfo } from "./mock";
 import { TPetInfo, TItem } from "./types";
 
@@ -66,7 +67,7 @@ export const StatusArea = ({
               Items
             </button>
             <button
-              onClick={() => console.log("fire off Pet transaction here")}
+              onClick={() => petFlowGotchi()}
               className="cursor-pointer rounded-full w-14 h-14 bg-emerald-400"
             >
               Pet
