@@ -47,7 +47,7 @@ pub fun main(address: Address): NFT {
     let display = MetadataViews.getDisplay(nft)!
 
     let owner: Address = nft.owner!.address!
-    let actions = nft.resolveView(Type<FlowGotchi.Actions>())
+    let actions = nft.resolveView(Type<FlowGotchi.ActionStatus>())
     let traits = nft.resolveView(Type<FlowGotchi.Traits>())
     let quests = nft.resolveView(Type<FlowGotchi.Quests>())
 

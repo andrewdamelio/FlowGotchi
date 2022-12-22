@@ -4,32 +4,32 @@
 			"source": "./cadence/contracts/shared/FungibleToken.cdc",
 			"aliases": {
 				"emulator": "ee82856bf20e2aa6",
-				"testnet": "9a0766d93b6608b7",
-				"mainnet": "f233dcee88fe0abe"
+				"testnet": "0x9a0766d93b6608b7",
+				"mainnet": "0xf233dcee88fe0abe"
 			}
 		},
 		"NonFungibleToken": {
 			"source": "./cadence/contracts/shared/NonFungibleToken.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "9a0766d93b6608b7",
-				"mainnet": "f233dcee88fe0abe"
+				"testnet": "0x631e88ae7f1d7c20",
+				"mainnet": "0x1d7e57aa55817448"
 			}
 		},
 		"MetadataViews": {
 			"source": "./cadence/contracts/shared/MetadataViews.cdc",
 			"aliases": {
 				"emulator": "f8d6e0586b0a20c7",
-				"testnet": "9a0766d93b6608b7",
-				"mainnet": "f233dcee88fe0abe"
+				"testnet": "0x631e88ae7f1d7c20",
+				"mainnet": "0x1d7e57aa55817448"
 			}
 		},
 		"FlowToken": {
 			"source": "./cadence/contracts/shared/FlowToken.cdc",
 			"aliases": {
 				"emulator": "0ae53cb6e3f42a79",
-				"testnet": "9a0766d93b6608b7",
-				"mainnet": "f233dcee88fe0abe"
+				"testnet": "0x7e60df042a9c0868",
+				"mainnet": "0x1654653399040a61"
 			}
 		},
 		"FlowGotchi": "./cadence/contracts/FlowGotchi.cdc"
@@ -52,8 +52,8 @@
 			"fromFile": "test.private.json"
 		},
 		"testnet-account": {
-			"address": "513421132e14843b",
-			"key": "b9912a058d78b81fa8eb047d78fbe148d4d6f2d9fc6fcacd2bce40dd8267854a"
+			"address": "0xf3429b0ff26fcb0f",
+			"key": "affb91e2b12e292917b22336538d250fb7a0d40f8a12cf81e9a4fbbd572075dd"
 		}
 	},
 	"deployments": {

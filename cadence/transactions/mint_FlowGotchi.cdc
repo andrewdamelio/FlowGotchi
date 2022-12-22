@@ -1,6 +1,3 @@
-import FungibleToken from "../contracts/shared/FungibleToken.cdc"
-import NonFungibleToken from "../contracts/shared/NonFungibleToken.cdc"
-import MetadataViews from "../contracts/shared/MetadataViews.cdc"
 import FlowGotchi from "../contracts/FlowGotchi.cdc"
 
 /// Transaction to mint a FlowGotchi.NFT using the `mintFlowGotchi()` method
