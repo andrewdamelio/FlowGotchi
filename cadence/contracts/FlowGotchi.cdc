@@ -199,24 +199,12 @@ pub contract FlowGotchi: NonFungibleToken {
             self.royalties = royalties
             self.metadata = metadata
             self.items = []
-            // self.quests = {
-            //     0: Quests(
-            //         status: FlowGotchi.QuestStatus.Incomplete,
-            //         name: "Flow Rookie",
-            //         description: "Have at least 10 FLOW tokens in your Dapper Wallet"
-            //     ),
-            //     1: Quests(
-            //         status: FlowGotchi.QuestStatus.Incomplete,
-            //         name: "Flow Veteran",
-            //         description: "Have at least 50 FLOW tokens in your Dapper Wallet"
-            //     ),
-            //     2: Quests(
-            //         status: FlowGotchi.QuestStatus.Incomplete,
-            //         name: "Flow All Star",
-            //         description: "Have at least 1,000 FLOW tokens in your Dapper Wallet"
-            //     )
-            // }
-            self.quests <-{}
+            // TODO: Add NBATS & NFLAD Quests
+            self.quests <-{
+                0: <-FlowGotchiQuests.startQuest(questIdentifier: 0),
+                1: <-FlowGotchiQuests.startQuest(questIdentifier: 1),
+                2: <-FlowGotchiQuests.startQuest(questIdentifier: 2)
+            }
 
             // Set birth stats
             let currentBlock = getCurrentBlock()

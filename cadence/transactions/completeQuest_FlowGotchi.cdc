@@ -1,8 +1,8 @@
-import FlowToken from "../../contracts/shared/FlowToken.cdc"
-import FungibleToken from "../../contracts/shared/FungibleToken.cdc"
-import NonFungibleToken from "../../contracts/shared/NonFungibleToken.cdc"
-import FlowGotchi from "../../contracts/shared/FlowGotchi.cdc"
-import MetadataViews from "../../contracts/shared/MetadataViews.cdc"
+import FlowToken from "../contracts/shared/FlowToken.cdc"
+import FungibleToken from "../contracts/shared/FungibleToken.cdc"
+import NonFungibleToken from "../contracts/shared/NonFungibleToken.cdc"
+import FlowGotchi from "../contracts/FlowGotchi.cdc"
+import MetadataViews from "../contracts/shared/MetadataViews.cdc"
 
 transaction(questId: UInt64) {
     let collection: &AnyResource{FlowGotchi.FlowGotchiCollectionPublic}
@@ -15,6 +15,6 @@ transaction(questId: UInt64) {
     execute {
         let nft = self.collection.borrowFlowGotchi(id: self.collection.getIDs()[0])!
 
-        nft.completeQuest(questId: questId)
+        nft.completeQuest(questIdentifier: questId)
     }
 }
