@@ -1,8 +1,8 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { StatusArea } from "./statusArea";
 import { UserInfo } from "./userInfo";
-import { mockTasks, mockPetInfo, mockUser } from "./mock";
+import { mockUser } from "./mock";
 import { TaskList } from "./tasks";
 import { TPetInfo, TUser, TTask } from "./types";
 import { getMetaData, hasFlowGotchi, setupFlowGotchi, mintFlowGotchi } from "./fclCalls";
@@ -10,21 +10,16 @@ import * as fcl from "@onflow/fcl"
 
 export default function Home() {
   const [isLogged, setIsLogged] = useState(false);
-  const [account, setAccount] = useState(null);
   const [user, setUser] = useState<null | TUser>(null);
   const [pet, setPet] = useState<null | TPetInfo>(null);
   const [tasks, setTasks] = useState<TTask[]>([]);
   const isLoggedIn = isLogged && pet && user;
 
-  const loadMetaData = async(account) => {
-    const metaData = await getMetaData(account?.addr);
-    console.log('metaData', metaData)
-    return metaData;
-  }
+  const loadMetaData = async(addr: string) => await getMetaData(addr);
 
   const logout = async () => {
     await fcl.currentUser.unauthenticate();
-    console.log('account', account);
+
     setUser(null);
     setPet(null);
     setTasks([]);
@@ -42,11 +37,10 @@ export default function Home() {
 
     await fcl.logIn()
     let flowUser =  await fcl.currentUser.authenticate();
+    const address = flowUser?.addr;
 
-    setAccount(flowUser.addr);
-
-    if (flowUser?.addr) {
-      const isFlowGotchiSetup = await hasFlowGotchi(flowUser?.addr);
+    if (address) {
+      const isFlowGotchiSetup = await hasFlowGotchi(address);
       let metaData = null;
 
       if (!isFlowGotchiSetup) {
@@ -54,10 +48,10 @@ export default function Home() {
         await mintFlowGotchi();
       }
 
-      metaData = await loadMetaData(flowUser);
+      metaData = await loadMetaData(address);
       setUser(mockUser);   // TODO
       setPet(metaData);
-      setTasks(mockTasks); // TODO
+      setTasks(metaData?.quests || []);
       setIsLogged(true);
     }
   };
