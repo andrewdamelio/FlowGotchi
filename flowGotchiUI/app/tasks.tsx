@@ -47,13 +47,15 @@ const TaskItem = ({ task }: { task: TTask }) => {
       <h4 className="font-serif col-span-full text-stone-100 dark:text-violet-800 text-lg">
         {task.name}
       </h4>
-      <p className="font-sans col-span-full text-m text-slate-50 dark:text-emerald-700">{task.description}</p>
-      {/* <div className="flex flex-row whitespace-nowrap my-1 col-span-8">
-        <span className="text-m font-sans mr-2">Progress: </span>
-        <span className="text-m font-sans">
-          {task.status?.rawValue}%
+      <p className="font-sans col-span-full text-m text-slate-50 dark:text-emerald-700">
+        {task.description}
+      </p>
+      <div className="flex flex-row whitespace-nowrap my-1 col-span-8">
+        <span className="text-m font-sans mr-2 text-slate-50 dark:text-emerald-700">Progress: </span>
+        <span className="text-m font-sans text-slate-50 dark:text-emerald-700">
+          {task.progress}%
         </span>
-      </div> */}
+      </div>
       {CustomButton}
     </li>
   );

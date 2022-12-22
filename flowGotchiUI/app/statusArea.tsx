@@ -3,9 +3,9 @@
 import Image from "next/image";
 import { useState } from "react";
 import { petFlowGotchi, feedFlowGotchi } from "./fclCalls";
-import { TPetInfo, TItem, FRIENDSHIP_LEVEL } from "./types";
+import { TRawMetaData, TItem, FRIENDSHIP_LEVEL } from "./types";
 
-export const StatusArea = ({ pet }: { pet: TPetInfo }): JSX.Element => {
+export const StatusArea = ({ pet }: { pet: TRawMetaData }): JSX.Element => {
   const [showItems, setShowItems] = useState(false);
   return (
     <section className="mx-auto w-96 rounded-xl p-1 bg-gradient-to-tl from-amber-600 to-lime-400">
