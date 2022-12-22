@@ -39,7 +39,7 @@ pub contract FlowGotchi: NonFungibleToken {
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
     pub event NewQuestStarted(flowGotchiID: UInt64, owner: Address, questIdentifer: UInt64)
-    pub event QuestCompleted(flowGotchiID: UInt64, owner: Address, questIdentifier: UInt64, completedQuestID: UInt64)
+    pub event QuestCompleted(flowGotchiID: UInt64, owner: Address, questIdentifier: UInt64, completedQuestID: UInt64, questName: String)
 
     /// Struct representing FlowGotchi traits - used as a MetadataView
     ///
@@ -358,7 +358,13 @@ pub contract FlowGotchi: NonFungibleToken {
             }
             let questRef = self.getQuestRef(questIdentifier: questIdentifier)!
             if questRef.complete() {
-                emit QuestCompleted(flowGotchiID: self.id, owner: self.homeAddress, questIdentifier: questIdentifier, completedQuestID: questRef.id)
+                emit QuestCompleted(
+                    flowGotchiID: self.id,
+                    owner: self.homeAddress,
+                    questIdentifier: questIdentifier,
+                    completedQuestID: questRef.id,
+                    questName: String
+                )
                 return true
             }
             return false
@@ -456,6 +462,7 @@ pub contract FlowGotchi: NonFungibleToken {
             self.flowGotchiHatched = false
         }
 
+        /// Currently, only 1 FlowGotchi allowed per account (or Collection really)
         pub fun deposit(token: @NonFungibleToken.NFT) {
             pre {
                 // Prevent storing more than one FlowGotchi
@@ -475,6 +482,8 @@ pub contract FlowGotchi: NonFungibleToken {
             destroy oldToken
         }
 
+        // TODO: If we're really going to map FlowGotchis 1:1 per account, we want to reconsider how we handle withdrawals
+        // or reconsider the 1:1 allowance. Alternatively, could we just let accounts have as many as they want?
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
 
@@ -507,6 +516,7 @@ pub contract FlowGotchi: NonFungibleToken {
             return FlowGotchi as &AnyResource{MetadataViews.Resolver}
         }
 
+        /// Each Collection contains within it a FlowGotchi that belongs to the owner that mints it - like a FlowGotchi egg! 
         pub fun mintFlowGotchi() {
             pre {
                 !self.flowGotchiHatched:
