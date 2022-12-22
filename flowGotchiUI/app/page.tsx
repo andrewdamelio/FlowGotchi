@@ -4,18 +4,27 @@ import { StatusArea } from "./statusArea";
 import { UserInfo } from "./userInfo";
 import { mockUser } from "./mock";
 import { TaskList } from "./tasks";
-import { TPetInfo, TUser, TTask } from "./types";
-import { getMetaData, getAllDayMoments, getTopShotMoments, hasFlowGotchi, setupFlowGotchi, mintFlowGotchi } from "./fclCalls";
-import * as fcl from "@onflow/fcl"
+import { TRawMetaData, TUser, TTask, TASK_STATUS } from "./types";
+import {
+  getMetaData,
+  getAllDayMoments,
+  getTopShotMoments,
+  hasFlowGotchi,
+  setupFlowGotchi,
+  mintFlowGotchi,
+} from "./fclCalls";
+import * as fcl from "@onflow/fcl";
+import { TASKS } from "./constants";
 
 export default function Home() {
   const [isLogged, setIsLogged] = useState(false);
   const [user, setUser] = useState<null | TUser>(null);
-  const [pet, setPet] = useState<null | TPetInfo>(null);
+  const [pet, setPet] = useState<null | TRawMetaData>(null);
+  const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState<TTask[]>([]);
   const isLoggedIn = isLogged && pet && user;
 
-  const loadMetaData = async(addr: string) => await getMetaData(addr);
+  const loadMetaData = async (addr: string) => await getMetaData(addr);
 
   const logout = async () => {
     await fcl.currentUser.unauthenticate();
@@ -31,17 +40,19 @@ export default function Home() {
     fcl.config({
       "accessNode.api": "https://rest-testnet.onflow.org",
       // "discovery.wallet": "https://fcl-discovery.onflow.org/testnet/authn"
-      "discovery.wallet": "https://staging.accounts.meetdapper.com/fcl/authn-restricted",
-      "discovery.wallet.method": "POP/RPC"
+      "discovery.wallet":
+        "https://staging.accounts.meetdapper.com/fcl/authn-restricted",
+      "discovery.wallet.method": "POP/RPC",
     });
 
     await fcl.logIn()
+    setLoading(true);
     let flowUser =  await fcl.currentUser.authenticate();
     const address = flowUser?.addr;
 
     if (address) {
       const isFlowGotchiSetup = await hasFlowGotchi(address);
-      let metaData = null;
+      let metaData: TRawMetaData | null = null;
 
       if (!isFlowGotchiSetup) {
         await setupFlowGotchi();
@@ -49,7 +60,6 @@ export default function Home() {
       }
 
       metaData = await loadMetaData(address);
-
       let user = mockUser;
 
       // Try and get Topshot Moments
@@ -69,12 +79,24 @@ export default function Home() {
         // swallow error
         user.allDayMoments = 0;
       }
-
-      setUser(user);   // TODO
+      const tasks = TASKS.map((baseTask) => {
+        const quest = metaData?.quests.find(
+          (metaQuest) => metaQuest.name === baseTask.name
+        );
+        return ({
+          ...baseTask,
+          status: {
+            rawValue: quest?.status?.rawValue || TASK_STATUS.Incomplete,
+          },
+          progress: baseTask.getProgress(user),
+        });
+      });
+      setUser(user);
       setPet(metaData);
-      setTasks(metaData?.quests || []);
+      setTasks(tasks);
       setIsLogged(true);
     }
+    setLoading(false);
   };
 
   return (
@@ -84,7 +106,7 @@ export default function Home() {
       </h1>
       {isLoggedIn && (
         <>
-         <button
+          <button
             className="font-serif cursor-pointer h-8 px-4 my-2 rounded-full bg-emerald-500 w-max absolute top-2 right-2"
             onClick={logout}
           >
@@ -104,7 +126,7 @@ export default function Home() {
             className="font-serif cursor-pointer h-8 px-4 my-2 rounded-full bg-emerald-500"
             onClick={login}
           >
-            Connect Wallet
+            {loading ? "Connecting..." : "Connect Wallet"}
           </button>
         </section>
       )}

@@ -1,4 +1,5 @@
 import * as fcl from "@onflow/fcl"
+import { TRawMetaData } from "./types";
 
 // Script to get TopShot Moment
 export const getTopShotMoments = async (user) => {
@@ -31,7 +32,7 @@ export const getAllDayMoments = async (user) => {
 }
 
 // Script to get FlowGotchi MetaData
-export const getMetaData = async (user) => {
+export const getMetaData = async (user): TRawMetaData => {
   return await fcl.query({
     cadence: `
     import FlowGotchi from 0x3a9134be2cb28add
