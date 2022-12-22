@@ -20,6 +20,7 @@ export default function Home() {
   const [isLogged, setIsLogged] = useState(false);
   const [user, setUser] = useState<null | TUser>(null);
   const [pet, setPet] = useState<null | TRawMetaData>(null);
+  const [loading, setLoading] = useState(false);
   const [tasks, setTasks] = useState<TTask[]>([]);
   const isLoggedIn = isLogged && pet && user;
 
@@ -44,8 +45,9 @@ export default function Home() {
       "discovery.wallet.method": "POP/RPC",
     });
 
-    await fcl.logIn();
-    let flowUser = await fcl.currentUser.authenticate();
+    await fcl.logIn()
+    setLoading(true);
+    let flowUser =  await fcl.currentUser.authenticate();
     const address = flowUser?.addr;
 
     if (address) {
@@ -94,6 +96,7 @@ export default function Home() {
       setTasks(tasks);
       setIsLogged(true);
     }
+    setLoading(false);
   };
 
   return (
@@ -123,7 +126,7 @@ export default function Home() {
             className="font-serif cursor-pointer h-8 px-4 my-2 rounded-full bg-emerald-500"
             onClick={login}
           >
-            Connect Wallet
+            {loading ? "Connecting..." : "Connect Wallet"}
           </button>
         </section>
       )}
