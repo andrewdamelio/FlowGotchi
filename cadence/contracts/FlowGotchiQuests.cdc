@@ -51,7 +51,7 @@ pub contract FlowGotchiQuests {
         }
     }
 
-    /** Quest */
+    /** QuestVerifier */
     
     /// Struct interface defining a quest journey that can be completed
     ///
@@ -188,7 +188,8 @@ pub contract FlowGotchiQuests {
     }
 
     /** Quest Resource */
-    /// Resource representing proof of a completed quest
+    
+    /// Resource maintaining quest progression & proof of completion
     ///
     pub resource Quest: NonFungibleToken.INFT {
         pub let id: UInt64

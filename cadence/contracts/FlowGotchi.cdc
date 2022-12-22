@@ -120,8 +120,6 @@ pub contract FlowGotchi: NonFungibleToken {
         pub let birthblock: UInt64
         /// Creation block timestamp
         pub let birthdate: UFix64
-        // Quest Status (TODO move to another contract)
-        // access(self) let quests: {UInt64: AnyStruct}
 
         /* FlowGotchi actions block amount cooldowns */
         /// Amount of seconds before Gotchi can be pet again
@@ -145,10 +143,10 @@ pub contract FlowGotchi: NonFungibleToken {
         /// Items that belong to the FlowGotchi - not implemented at the moment
         pub let items: [AnyStruct]
 
+        /// Mapping of quest identifier to Quest resourrce
+        /// Note that quest identifiers are defined in FlowGotchiQuests contract
+        /// TODO: Update to index on Type?
         pub let quests: @{UInt64: FlowGotchiQuests.Quest}
-        // pub let questPaths: [{FlowGotchiQuests.Quest}]
-        /// Quests completed by this FlowGotchi
-        // pub let completedQuests: @{Type: FlowGotchiQuests.CompletedQuest}
 
         // FlowGotchi Stats
         // 0 - No Limit
@@ -178,7 +176,6 @@ pub contract FlowGotchi: NonFungibleToken {
             self.royalties = royalties
             self.metadata = metadata
             self.items = []
-            // TODO: Add NBATS & NFLAD Quests
             self.quests <-{
                 0: <-FlowGotchiQuests.startQuest(questIdentifier: 0),
                 1: <-FlowGotchiQuests.startQuest(questIdentifier: 1),
@@ -201,10 +198,10 @@ pub contract FlowGotchi: NonFungibleToken {
             self.mood = (metadata["mood"]! as! UInt64)
             self.hunger = (metadata["hunger"]! as! UInt64)
 
-            self.lastPet = 0.0
-            self.lastFed = 0.0
-            self.nextPettingTime = 0.0
-            self.nextFeedingTime = 0.0
+            self.lastPet = self.birthdate - self.canPetCoolDown
+            self.lastFed = self.birthdate - self.canFeedCoolDown
+            self.nextPettingTime = self.birthdate
+            self.nextFeedingTime = self.birthdate
         }
 
         /** Getters for FlowGotchi's attributes */
@@ -236,7 +233,7 @@ pub contract FlowGotchi: NonFungibleToken {
             self.updateStats()
             // Since the moods array is initialized in order of increasingly good mood, the
             // lower the mood value, the lower the mood
-            return FlowGotchi.moods[self.mood % 10]
+            return FlowGotchi.moods[self.mood / 10]
         }
 
         /** Interactions */
@@ -632,7 +629,8 @@ pub contract FlowGotchi: NonFungibleToken {
             "Happy",
             "Playful",
             "Energized",
-            "Joyful"
+            "Joyful",
+            "Ecstatic"
         ]
 
         // Set the named paths
