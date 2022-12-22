@@ -32,7 +32,8 @@
 				"mainnet": "0x1654653399040a61"
 			}
 		},
-		"FlowGotchi": "./cadence/contracts/FlowGotchi.cdc"
+		"FlowGotchi": "./cadence/contracts/FlowGotchi.cdc",
+		"FlowGotchiQuests": "./cadence/contracts/FlowGotchiQuests.cdc"
 	},
 	"networks": {
 		"emulator": "127.0.0.1:3569",
@@ -61,6 +62,7 @@
 			"emulator-account": [
 				"NonFungibleToken",
 				"MetadataViews",
+				"FlowGotchiQuests",
 				"FlowGotchi"
 			]
 		}
