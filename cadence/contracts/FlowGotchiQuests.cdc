@@ -24,7 +24,7 @@ pub contract FlowGotchiQuests {
 
     /** QuestsView */
 
-    pub struct QuestOverview {
+    pub struct Quests {
         pub let status: QuestStatus
         pub let name: String
         pub let description: String
@@ -40,10 +40,10 @@ pub contract FlowGotchiQuests {
     }
 
     pub struct QuestsView {
-        pub let overviews: [QuestOverview]
+        pub let overviews: [Quests]
 
         init(
-            overviews: [QuestOverview]
+            overviews: [Quests]
         ) {
             self.overviews = overviews
         }
