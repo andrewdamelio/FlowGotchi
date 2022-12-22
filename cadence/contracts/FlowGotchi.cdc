@@ -195,9 +195,9 @@ pub contract FlowGotchi: NonFungibleToken {
             self.canFeedCoolDown = 10800.0
             self.canPet = true
             self.canFeed = true
-            self.friendship = metadata["friendship"]!
-            self.mood = metadata["mood"]!
-            self.hunger = metadata["hunger"]!
+            self.friendship = (metadata["friendship"]! as! UInt64)
+            self.mood = (metadata["mood"]! as! UInt64)
+            self.hunger = (metadata["hunger"]! as! UInt64)
 
             self.lastPet = 0.0
             self.lastFed = 0.0
