@@ -520,9 +520,9 @@ pub contract FlowGotchi: NonFungibleToken {
             metadata["mintedTime"] = currentBlock.timestamp
             metadata["minter"] = self.owner!.address
             // Initialize traits
-            metadata["friendship"] = 0
-            metadata["mood"] = 50
-            metadata["hunger"] = 50
+            metadata["friendship"] = UInt64(0)
+            metadata["mood"] = UInt64(50)
+            metadata["hunger"] = UInt64(50)
             metadata["items"] = []
 
             // create a FlowGotchi NFT & grab its id
