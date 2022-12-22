@@ -5,7 +5,7 @@ import { UserInfo } from "./userInfo";
 import { mockUser } from "./mock";
 import { TaskList } from "./tasks";
 import { TPetInfo, TUser, TTask } from "./types";
-import { getMetaData, getMoments, hasFlowGotchi, setupFlowGotchi, mintFlowGotchi } from "./fclCalls";
+import { getMetaData, getAllDayMoments, getTopShotMoments, hasFlowGotchi, setupFlowGotchi, mintFlowGotchi } from "./fclCalls";
 import * as fcl from "@onflow/fcl"
 
 export default function Home() {
@@ -50,9 +50,26 @@ export default function Home() {
 
       metaData = await loadMetaData(address);
 
-      let moments = await getMoments(address);
       let user = mockUser;
-      user.topShotMoments = moments.length;
+
+      // Try and get Topshot Moments
+      try {
+        let moments = await getTopShotMoments(address);
+        user.topShotMoments = moments.length;
+      } catch (error) {
+        // swallow error
+        user.topShotMoments = 0;
+      }
+
+      // Try and get AllDay Moments
+      try {
+        let moments = await getAllDayMoments(address);
+        user.allDayMoments = moments.length;
+      } catch (error) {
+        // swallow error
+        user.allDayMoments = 0;
+      }
+
       setUser(user);   // TODO
       setPet(metaData);
       setTasks(metaData?.quests || []);

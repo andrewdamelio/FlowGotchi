@@ -1,13 +1,28 @@
 import * as fcl from "@onflow/fcl"
 
-// Script to get FlowGotchi Moments count
-export const getMoments = async (user) => {
+// Script to get TopShot Moment
+export const getTopShotMoments = async (user) => {
   return await fcl.query({
     cadence: `
       import TopShot from 0x877931736ee77cff
       pub fun main(account: Address): [UInt64] {
         let acct = getAccount(account)
         let collectionRef = acct.getCapability(/public/MomentCollection).borrow<&{TopShot.MomentCollectionPublic}>()!
+        return collectionRef.getIDs()
+      }
+    `,
+    args: (arg, t) => [arg(user, t.Address)]
+  });
+}
+
+// Script to get NFL AllDay Moments
+export const getAllDayMoments = async (user) => {
+  return await fcl.query({
+    cadence: `
+      import AllDay from 0x4dfd62c88d1b6462
+      pub fun main(account: Address): [UInt64] {
+        let acct = getAccount(account)
+        let collectionRef = acct.getCapability(AllDay.CollectionPublicPath).borrow<&{AllDay.MomentNFTCollectionPublic}>()!
         return collectionRef.getIDs()
       }
     `,
