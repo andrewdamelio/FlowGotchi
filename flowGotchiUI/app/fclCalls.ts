@@ -96,8 +96,6 @@ export const setupFlowGotchi = async () => {
     cadence: `
       import FlowGotchi from 0xf3429b0ff26fcb0f
       import NonFungibleToken from 0x631e88ae7f1d7c20
-
-
       transaction {
         prepare(acct: AuthAccount) {
           if acct.borrow<&FlowGotchi.Collection>(from: FlowGotchi.CollectionStoragePath) == nil {

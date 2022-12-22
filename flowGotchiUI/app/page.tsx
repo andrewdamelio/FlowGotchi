@@ -16,12 +16,15 @@ export default function Home() {
   const [tasks, setTasks] = useState<TTask[]>([]);
   const isLoggedIn = isLogged && pet && user;
 
-
-  useEffect(() => fcl.currentUser.subscribe(setAccount), [])
-
+  const loadMetaData = async(account) => {
+    const metaData = await getMetaData(account?.addr);
+    console.log('metaData', metaData)
+    return metaData;
+  }
 
   const logout = async () => {
-    await fcl.unauthenticate();
+    await fcl.currentUser.unauthenticate();
+    console.log('account', account);
     setUser(null);
     setPet(null);
     setTasks([]);
@@ -29,30 +32,29 @@ export default function Home() {
   };
 
   const login = async () => {
+    // await fcl.unauthenticate();
     fcl.config({
       "accessNode.api": "https://rest-testnet.onflow.org",
-      "discovery.wallet": "https://fcl-discovery.onflow.org/testnet/authn",
+      // "discovery.wallet": "https://fcl-discovery.onflow.org/testnet/authn"
+      "discovery.wallet": "https://staging.accounts.meetdapper.com/fcl/authn-restricted",
+      "discovery.wallet.method": "POP/RPC"
     });
 
     await fcl.logIn()
+    let flowUser =  await fcl.currentUser.authenticate();
 
-    console.log('account', account);
+    setAccount(flowUser.addr);
 
-    if (account?.addr) {
-      const isFlowGotchiSetup = await hasFlowGotchi(account?.addr);
-
-      console.log('isFlowGotchiSetup', isFlowGotchiSetup)
+    if (flowUser?.addr) {
+      const isFlowGotchiSetup = await hasFlowGotchi(flowUser?.addr);
+      let metaData = null;
 
       if (!isFlowGotchiSetup) {
         await setupFlowGotchi();
         await mintFlowGotchi();
       }
 
-      const metaData = await getMetaData(account?.addr);
-      console.log('metaData', metaData)
-
-
-      // const metaData = await getMetaData(account?.addr);
+      metaData = await loadMetaData(flowUser);
       setUser(mockUser);   // TODO
       setPet(metaData);
       setTasks(mockTasks); // TODO
