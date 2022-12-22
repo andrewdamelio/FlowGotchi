@@ -1,5 +1,6 @@
-import FlowGotchi from "../../contracts/shared/FlowGotchi.cdc"
-import MetadataViews from "../../contracts/shared/MetadataViews.cdc"
+import FlowGotchi from "../contracts/FlowGotchi.cdc"
+import MetadataViews from "../contracts/shared/MetadataViews.cdc"
+import FlowGotchiQuests from "../contracts/FlowGotchiQuests.cdc"
 
 /// This script gets all the view-based metadata associated with the specified NFT
 /// and returns it as a single struct
@@ -49,7 +50,7 @@ pub fun main(address: Address): NFT {
     let owner: Address = nft.owner!.address!
     let actions = nft.resolveView(Type<FlowGotchi.ActionStatus>())
     let traits = nft.resolveView(Type<FlowGotchi.Traits>())
-    let quests = nft.resolveView(Type<FlowGotchi.Quests>())
+    let quests = nft.resolveView(Type<FlowGotchiQuests.QuestsView>())
 
     return NFT(
         name: display.name,

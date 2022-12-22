@@ -13,6 +13,7 @@ import NonFungibleToken from "./shared/NonFungibleToken.cdc"
 import MetadataViews from "./shared/MetadataViews.cdc"
 import FungibleToken from "./shared/FungibleToken.cdc"
 import FlowToken from "./shared/FlowToken.cdc"
+import FlowGotchiQuests from "./FlowGotchiQuests.cdc"
 
 pub contract FlowGotchi: NonFungibleToken {
 
@@ -37,6 +38,8 @@ pub contract FlowGotchi: NonFungibleToken {
     pub event Debug(log: String)
     pub event Withdraw(id: UInt64, from: Address?)
     pub event Deposit(id: UInt64, to: Address?)
+    pub event NewQuestStarted(flowGotchiID: UInt64, owner: Address, questIdentifer: UInt64)
+    pub event QuestCompleted(flowGotchiID: UInt64, owner: Address, questIdentifier: UInt64, completedQuestID: UInt64, questName: String)
 
     /// Struct representing FlowGotchi traits - used as a MetadataView
     ///
@@ -102,27 +105,9 @@ pub contract FlowGotchi: NonFungibleToken {
         }
     }
 
-    pub struct Quests {
-        access(account) var status: QuestStatus
-        pub var name: String
-        pub var description: String
-
-
-        init(
-            status: QuestStatus,
-            name: String,
-            description: String,
-        ) {
-            self.status = status
-            self.name = name
-            self.description = description
-        }
-
-        pub fun updateStatus(status: QuestStatus) {
-            self.status = status
-        }
-    }
-
+    /// This NFT defines a FlowGotchi creature, designed to belong to a Flow Address and accompany them on
+    /// their journey through Flow
+    ///
     pub resource NFT: NonFungibleToken.INFT, MetadataViews.Resolver {
         pub let id: UInt64
         pub let name: String
@@ -135,8 +120,6 @@ pub contract FlowGotchi: NonFungibleToken {
         pub let birthblock: UInt64
         /// Creation block timestamp
         pub let birthdate: UFix64
-        // Quest Status (TODO move to another contract)
-        access(self) let quests: {UInt64: AnyStruct}
 
         /* FlowGotchi actions block amount cooldowns */
         /// Amount of seconds before Gotchi can be pet again
@@ -157,8 +140,13 @@ pub contract FlowGotchi: NonFungibleToken {
         /// Whether Gotchi can be fed
         pub var canFeed: Bool
 
-        // Items that belong to the FlowGotchi - not implemented at the moment
+        /// Items that belong to the FlowGotchi - not implemented at the moment
         pub let items: [AnyStruct]
+
+        /// Mapping of quest identifier to Quest resourrce
+        /// Note that quest identifiers are defined in FlowGotchiQuests contract
+        /// TODO: Update to index on Type?
+        pub let quests: @{UInt64: FlowGotchiQuests.Quest}
 
         // FlowGotchi Stats
         // 0 - No Limit
@@ -188,32 +176,12 @@ pub contract FlowGotchi: NonFungibleToken {
             self.royalties = royalties
             self.metadata = metadata
             self.items = []
-            self.quests = {
-                0: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "Flow Rookie",
-                    description: "Have at least 10 FLOW tokens in your Dapper Wallet"
-                ),
-                1: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "Flow Veteran",
-                    description: "Have at least 50 FLOW tokens in your Dapper Wallet"
-                ),
-                2: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "Flow All Star",
-                    description: "Have at least 1,000 FLOW tokens in your Dapper Wallet"
-                ),
-                3: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "NBA Top Shot Debut",
-                    description: "Own one NBA Top Shot Moment"
-                ),
-                4: Quests(
-                    status: FlowGotchi.QuestStatus.Incomplete,
-                    name: "NFL All Day Debut",
-                    description: "Own one NFL All Day Moment"
-                )
+            self.quests <-{
+                0: <-FlowGotchiQuests.startQuest(questIdentifier: 0),
+                1: <-FlowGotchiQuests.startQuest(questIdentifier: 1),
+                2: <-FlowGotchiQuests.startQuest(questIdentifier: 2),
+                3: <-FlowGotchiQuests.startQuest(questIdentifier: 3),
+                4: <-FlowGotchiQuests.startQuest(questIdentifier: 4)
             }
 
             // Set birth stats
@@ -226,14 +194,14 @@ pub contract FlowGotchi: NonFungibleToken {
             self.canFeedCoolDown = 10800.0
             self.canPet = true
             self.canFeed = true
-            self.friendship = 0
-            self.mood = 0
-            self.hunger = 0
+            self.friendship = (metadata["friendship"]! as! UInt64)
+            self.mood = (metadata["mood"]! as! UInt64)
+            self.hunger = (metadata["hunger"]! as! UInt64)
 
-            self.lastPet = 0.0
-            self.lastFed = 0.0
-            self.nextPettingTime = 0.0
-            self.nextFeedingTime = 0.0
+            self.lastPet = self.birthdate - self.canPetCoolDown
+            self.lastFed = self.birthdate - self.canFeedCoolDown
+            self.nextPettingTime = self.birthdate
+            self.nextFeedingTime = self.birthdate
         }
 
         /** Getters for FlowGotchi's attributes */
@@ -246,56 +214,8 @@ pub contract FlowGotchi: NonFungibleToken {
             return getCurrentBlock().height - self.birthblock
         }
 
-        pub fun completeQuest(questId: UInt64) {
-            let vaultRef = getAccount(self.owner!.address!)
-                .getCapability(/public/flowTokenBalance)
-                .borrow<&FlowToken.Vault{FungibleToken.Balance}>()
-                ?? panic("Could not borrow Balance reference to the Vault")
-
-            if (!self.quests.containsKey(questId)) {
-                panic("Could not find Quest ID")
-            }
-
-            if (questId == 0) { // Flow Balance Quests FLOW > 0.1
-                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
-                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
-                        panic("Quest already completed")
-                    }
-
-                    if (vaultRef.balance > 0.1) {
-                        emit Debug(log: "Quest 1: Completed")
-                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
-                        // quest.status = FlowGotchi.QuestStatus.Completed
-                        self.quests[questId] = quest
-                    }
-                }
-            }
-            else if (questId == 1) { // Flow Balance Quests FLOW > 1
-                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
-                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
-                        panic("Quest already completed")
-                    }
-
-                    if (vaultRef.balance > 1.0) {
-                        emit Debug(log: "Quest 2: Completed")
-                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
-                        self.quests[questId] = quest
-                    }
-                }
-            }
-            else if (questId == 2) { // Flow Balance Quests FLOW > 10
-                if let quest = self.quests[questId] as! FlowGotchi.Quests? {
-                    if (quest.status == FlowGotchi.QuestStatus.Completed) {
-                        panic("Quest already completed")
-                    }
-
-                    if (vaultRef.balance > 10.0) {
-                        emit Debug(log: "Quest 3: Completed")
-                        quest.updateStatus(status: FlowGotchi.QuestStatus.Completed)
-                        self.quests[questId] = quest
-                    }
-                }
-            }
+        pub fun getQuestRef(questIdentifier: UInt64): &FlowGotchiQuests.Quest? {
+            return &self.quests[questIdentifier] as &FlowGotchiQuests.Quest?
         }
 
         pub fun getCanPet(): Bool {
@@ -306,6 +226,14 @@ pub contract FlowGotchi: NonFungibleToken {
         pub fun getCanFeed(): Bool {
             self.updateStats()
             return self.canFeed
+        }
+
+        /// Returns the mood of the FlowGotchi based on its current mood stat
+        pub fun getMood(): String {
+            self.updateStats()
+            // Since the moods array is initialized in order of increasingly good mood, the
+            // lower the mood value, the lower the mood
+            return FlowGotchi.moods[self.mood / 10]
         }
 
         /** Interactions */
@@ -370,20 +298,11 @@ pub contract FlowGotchi: NonFungibleToken {
             return false
         }
 
-        /// Returns the mood of the FlowGotchi based on its current mood stat
-        pub fun getMood(): String {
-            self.updateStats()
-            // Since the moods array is initialized in order of increasingly good mood, the
-            // lower the mood value, the lower the mood
-            return FlowGotchi.moods[self.mood % 10]
-        }
-
         /** Attribute Updater */
 
         /// Update FlowGotchi's attributes based on current block
         ///
         pub fun updateStats() {
-            // TODO: Update hunger, mood, and friendship
             // Update petting & feeding times
             let currentTimestamp = getCurrentBlock().timestamp
             self.canPet = currentTimestamp >= self.nextPettingTime
@@ -422,14 +341,48 @@ pub contract FlowGotchi: NonFungibleToken {
             }
         }
 
+        /** Quest sign up & completion */
+
+        pub fun embarkOnQuest(questIdentifier: UInt64) {
+            pre {
+                !self.quests.containsKey(questIdentifier):
+                    "You've already embarked on this quest!"
+            }
+            self.quests[questIdentifier] <-! FlowGotchiQuests.startQuest(questIdentifier: questIdentifier)
+            emit NewQuestStarted(flowGotchiID: self.id, owner: self.homeAddress, questIdentifer: questIdentifier)
+        }
+
+        pub fun completeQuest(questIdentifier: UInt64): Bool {
+            pre {
+                self.quests.containsKey(questIdentifier)
+            }
+            let questRef = self.getQuestRef(questIdentifier: questIdentifier)!
+            if questRef.complete() {
+                emit QuestCompleted(
+                    flowGotchiID: self.id,
+                    owner: self.homeAddress,
+                    questIdentifier: questIdentifier,
+                    completedQuestID: questRef.id,
+                    questName: String
+                )
+                return true
+            }
+            return false
+        }
+
+        pub fun removeQuest(questIdentifier: UInt64) {
+            let quest <-self.quests.remove(key: questIdentifier)
+            destroy quest
+        }
+
         /** MetadataViews.Resolver */
 
         pub fun getViews(): [Type] {
             return [
                 Type<MetadataViews.Display>(),
-                Type<FlowGotchi.ActionStatus>(),
-                Type<FlowGotchi.Traits>(),
-                Type<FlowGotchi.Quests>()
+                Type<ActionStatus>(),
+                Type<Traits>(),
+                Type<FlowGotchiQuests.QuestsView>()
             ]
         }
 
@@ -463,23 +416,27 @@ pub contract FlowGotchi: NonFungibleToken {
                         canPet: self.canPet,
                         canFeed: self.canFeed,
                     )
-                case Type<FlowGotchi.Quests>():
-                    var quests: [FlowGotchi.Quests] = []
-                    let keys = self.quests.keys
-                    for key in keys {
-                        if let quest = self.quests[key] as! FlowGotchi.Quests? {
-                            quests.append(
-                                FlowGotchi.Quests(
-                                    status: quest.status,
-                                    name: quest.name,
-                                    description: quest.description
-                                )
-                            )
-                        }
+                case Type<FlowGotchiQuests.QuestsView>():
+                    let quests: [FlowGotchiQuests.Quests] = []
+                    for questID in self.quests.keys {
+                        let questRef = self.getQuestRef(questIdentifier: questID)!
+                        let overview = FlowGotchiQuests.Quests(
+                            status: questRef.status,
+                            name: questRef.verifier.name,
+                            description: questRef.verifier.description
+                        )
+                        quests.append(overview)
                     }
                     return quests
             }
             return nil
+        }
+
+        destroy() {
+            pre {
+                self.quests.length == 0: "FlowGotchi still has quests!"
+            }
+            destroy self.quests
         }
     }
 
@@ -505,6 +462,7 @@ pub contract FlowGotchi: NonFungibleToken {
             self.flowGotchiHatched = false
         }
 
+        /// Currently, only 1 FlowGotchi allowed per account (or Collection really)
         pub fun deposit(token: @NonFungibleToken.NFT) {
             pre {
                 // Prevent storing more than one FlowGotchi
@@ -524,6 +482,8 @@ pub contract FlowGotchi: NonFungibleToken {
             destroy oldToken
         }
 
+        // TODO: If we're really going to map FlowGotchis 1:1 per account, we want to reconsider how we handle withdrawals
+        // or reconsider the 1:1 allowance. Alternatively, could we just let accounts have as many as they want?
         pub fun withdraw(withdrawID: UInt64): @NonFungibleToken.NFT {
             let token <- self.ownedNFTs.remove(key: withdrawID) ?? panic("missing NFT")
 
@@ -556,6 +516,7 @@ pub contract FlowGotchi: NonFungibleToken {
             return FlowGotchi as &AnyResource{MetadataViews.Resolver}
         }
 
+        /// Each Collection contains within it a FlowGotchi that belongs to the owner that mints it - like a FlowGotchi egg! 
         pub fun mintFlowGotchi() {
             pre {
                 !self.flowGotchiHatched:
@@ -567,9 +528,9 @@ pub contract FlowGotchi: NonFungibleToken {
             metadata["mintedTime"] = currentBlock.timestamp
             metadata["minter"] = self.owner!.address
             // Initialize traits
-            metadata["friendship"] = 0
-            metadata["mood"] = 50
-            metadata["hunger"] = 50
+            metadata["friendship"] = UInt64(0)
+            metadata["mood"] = UInt64(50)
+            metadata["hunger"] = UInt64(50)
             metadata["items"] = []
 
             // create a FlowGotchi NFT & grab its id
@@ -677,7 +638,8 @@ pub contract FlowGotchi: NonFungibleToken {
             "Happy",
             "Playful",
             "Energized",
-            "Joyful"
+            "Joyful",
+            "Ecstatic"
         ]
 
         // Set the named paths
@@ -688,3 +650,4 @@ pub contract FlowGotchi: NonFungibleToken {
         emit ContractInitialized()
     }
 }
+ 
