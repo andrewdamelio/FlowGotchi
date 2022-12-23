@@ -29,7 +29,7 @@ export const StatusArea = ({ pet }: { pet: TRawMetaData }): JSX.Element => {
             >
               Back
             </button>
-            <ItemsList items={pet.items} name={pet.name} />
+            { pet.items && <ItemsList items={pet.items} name={pet.name} />}
           </>
         ) : (
           <>

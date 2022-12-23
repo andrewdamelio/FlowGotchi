@@ -1,8 +1,9 @@
+// @ts-ignore
 import * as fcl from "@onflow/fcl"
 import { TRawMetaData } from "./types";
 
 // Script to get TopShot Moment
-export const getTopShotMoments = async (user) => {
+export const getTopShotMoments = async (user: any) => {
   return await fcl.query({
     cadence: `
       import TopShot from 0x877931736ee77cff
@@ -12,12 +13,12 @@ export const getTopShotMoments = async (user) => {
         return collectionRef.getIDs()
       }
     `,
-    args: (arg, t) => [arg(user, t.Address)]
+    args: (arg: any, t: any) => [arg(user, t.Address)]
   });
 }
 
 // Script to get NFL AllDay Moments
-export const getAllDayMoments = async (user) => {
+export const getAllDayMoments = async (user: any) => {
   return await fcl.query({
     cadence: `
       import AllDay from 0x4dfd62c88d1b6462
@@ -27,12 +28,12 @@ export const getAllDayMoments = async (user) => {
         return collectionRef.getIDs()
       }
     `,
-    args: (arg, t) => [arg(user, t.Address)]
+    args: (arg: any, t: any) => [arg(user, t.Address)]
   });
 }
 
 // Script to get FlowGotchi MetaData
-export const getMetaData = async (user): TRawMetaData => {
+export const getMetaData = async (user: any) => {
   return await fcl.query({
     cadence: `
     import FlowGotchi from 0x3a9134be2cb28add
@@ -96,12 +97,12 @@ export const getMetaData = async (user): TRawMetaData => {
         )
     }
     `,
-    args: (arg, t) => [arg(user, t.Address)]
+    args: (arg: any, t: any) => [arg(user, t.Address)]
   });
 }
 
 // Script to check if the User has a FlowGotchi setup
-export const hasFlowGotchi = async (user) => {
+export const hasFlowGotchi = async (user: any) => {
   return await fcl.query({
     cadence: `
         import FlowGotchi from 0x3a9134be2cb28add
@@ -117,7 +118,7 @@ export const hasFlowGotchi = async (user) => {
           return false
       }
     `,
-    args: (arg, t) => [arg(user, t.Address)]
+    args: (arg: any, t: any) => [arg(user, t.Address)]
   });
 }
 

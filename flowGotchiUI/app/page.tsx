@@ -13,6 +13,7 @@ import {
   setupFlowGotchi,
   mintFlowGotchi,
 } from "./fclCalls";
+// @ts-ignore
 import * as fcl from "@onflow/fcl";
 import { TASKS } from "./constants";
 

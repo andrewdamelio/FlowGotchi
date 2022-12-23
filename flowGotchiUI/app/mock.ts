@@ -8,10 +8,18 @@ export const mockPetInfo: TPetInfo = {
   thumbnail: "someimage",
   owner: "0xdeadbeef",
   traits: {
-    age: 50,
-    friendshipLevel: 90,
-    mood: 90,
-    hunger: 10,
+    age: "50",
+    friendship: "90",
+    mood: "90",
+    hunger: "10",
+  },
+  actions: {
+    canFeed: false,
+    canPet: false,
+    lastFed: "0",
+    lastPet: "0",
+    nextFeedingTime: "0",
+    nextPettingTime: "0",
   },
   items: [
     {
@@ -27,7 +35,7 @@ export const mockPetInfo: TPetInfo = {
   ],
 };
 
-export const mockTasks: TTask[] = [
+export const mockTasks: any[] = [
   {
     questName: "NBA Top Shot Debut",
     questDescription: "Own one NBA Top Shot Moment",
@@ -43,7 +51,7 @@ export const mockTasks: TTask[] = [
   {
     questName: "Flow Rookie",
     questDescription: "Have at least 10 FLOW tokens in your Dapper Wallet",
-    status: TASK_STATUS.Claimed,
+    status: TASK_STATUS.Completed,
     progress: 100,
   },
   {
